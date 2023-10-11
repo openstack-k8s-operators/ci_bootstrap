@@ -1,0 +1,54 @@
+---
+- name: Create key
+  openstack.cloud.keypair:
+    state: present
+    name: "{{ bootstrap_keypair_name }}"
+    public_key_file: "{{ cifmw_bootstrap_public_key_file }}"
+
+- name: Create SG
+  openstack.cloud.security_group:
+    state: present
+    name: "{{ bootstrap_security_group_name }}"
+
+- name: Create ICMP SG rule
+  openstack.cloud.security_group_rule:
+    security_group: "{{ bootstrap_security_group_name }}"
+    protocol: icmp
+    remote_ip_prefix: 0.0.0.0/0
+
+- name: Create ssh SG rule
+  openstack.cloud.security_group_rule:
+    security_group: "{{ bootstrap_security_group_name }}"
+    protocol: tcp
+    port_range_min: 22
+    port_range_max: 22
+    remote_ip_prefix: 0.0.0.0/0
+
+# Note: I stopped working on this because the API is so slow 
+# and the server create fails with a nice error anyway
+# ++++++
+# - name: Check image
+#   openstack.cloud.image_info:
+#     image: CentOS-Stream-9-latest
+#   register: image_result
+#
+# - name: Check if image exists
+#   ansible.builtin.assert:
+#     that:
+#       - image_result.image != None
+#     msg: "Image is missing from cloud"
+#
+# - name: Check flavor
+#   openstack.cloud.compute_flavor_info:
+#     name: ci.standard.medium
+#   register: flavor_result
+#
+# - name: Check if flavor exists
+#   ansible.builtin.assert:
+#     that:
+#       - flavor_result.openstack_flavors | length > 0
+#     msg: "Flavor is missing from cloud"
+#
+# - name: Check if network exists
+#
+# +++++++

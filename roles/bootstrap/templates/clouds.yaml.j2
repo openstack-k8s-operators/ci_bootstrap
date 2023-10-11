@@ -1,0 +1,26 @@
+clouds:
+  {{ crc_ci_bootstrap_cloud_name }}:
+    identity_api_version: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].identity_api_version }}
+    region_name: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].region_name }}
+{% if "applicationcredential" in cloud_secrets[ crc_ci_bootstrap_cloud_name ].auth_type %}
+    auth:
+        auth_url: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].auth_url }}
+        application_credential_id: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].auth.application_credential_id }}
+        application_credential_secret: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].auth.application_credential_secret }}
+    auth_type: "v3applicationcredential"
+{% elif cloud_secrets[ crc_ci_bootstrap_cloud_name ].password is defined %}
+    auth:
+        auth_url: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].auth_url }}
+        username: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].username }}
+        password: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].password }}
+        project_name: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].project_name }}
+        user_domain_name: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].user_domain_name }}
+        project_domain_name: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].project_domain_name }}
+{% endif %}
+    regions:
+      - name: {{ cloud_secrets[ crc_ci_bootstrap_cloud_name ].region_name }}
+        values:
+          networks:
+            - name: public
+              routes_externally: true
+            - name: private

@@ -1,0 +1,63 @@
+---
+# Copyright Red Hat, Inc.
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+- name: Read clouds.yaml
+  ansible.builtin.include_vars:
+    file: "{{ bootstrap_clouds_yaml }}"
+    name: clouds_yaml
+
+- name: Cleanup instances
+  environment:
+    OS_CLOUD: "{{ crc_ci_bootstrap_cloud_name }}"
+  block:
+    - name: Delete controller-cifmw
+      openstack.cloud.server:
+        name: controller-cifmw
+        state: absent
+
+    - name: Delete crc-cifmw
+      openstack.cloud.server:
+        name: crc-cifmw
+        state: absent
+
+    - name: Delete compute-0-cifmw
+      openstack.cloud.server:
+        name: compute-0-cifmw
+        state: absent
+  when: local | bool
+
+- name: Cleanup network
+  environment:
+    OS_CLOUD: "{{ crc_ci_bootstrap_cloud_name }}"
+  when: cleanup_network | bool
+  block:
+    - name: Delete keypair
+      openstack.cloud.keypair:
+        state: absent
+        name: "{{ bootstrap_keypair_name }}"
+
+    - name: Delete SG
+      openstack.cloud.security_group:
+        state: absent
+        name: "{{ bootstrap_security_group_name }}"
+
+    - name: End execution
+      ansible.builtin.meta: "end_play"
+  # always:
+  #   - name: Remove clouds.yml secret
+  #     file:
+  #       path: "{{ bootstrap_ci_cloud_yml_secret_path }}"
+  #       state: absent
