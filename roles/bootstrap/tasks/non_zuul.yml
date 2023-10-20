@@ -29,7 +29,7 @@
 
 - name: Ensure supporting cloud resources are created
   ansible.builtin.include_tasks: supporting_cloud_resources.yml
-  when: not skip_create | bool
+  tags: create_resources
 
 - name: Create instances
   ansible.builtin.include_tasks:
@@ -40,14 +40,19 @@
     instance_image: "{{ item.value.image }}"
     instance_keypair: "{{ item.value.keypair }}"
     instance_security_group: "{{ item.value.security_group }}"
-    instance_network: "{{ crc_ci_bootstrap_networking.networks.default.router_net }}"
+    instance_network: "{{ bootstrap_router_net }}"
   loop: "{{ crc_ci_bootstrap_networking.instances | dict2items }}"
-  when: not skip_create| bool
+  tags: create_resources
 
 - name: Set var
   ansible.builtin.set_fact:
     zuul:
       build: 1dcaf86e72ec4400a8012f3892d815be
+
+- name: Save the in-memory inventory to a YAML file
+  ansible.builtin.copy:
+    content: "{{ hostvars | to_nice_yaml }}"
+    dest: inventory.yaml
 
 - name: End execution
   ansible.builtin.meta: "end_play"

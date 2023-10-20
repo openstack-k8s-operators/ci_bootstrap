@@ -14,7 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-- name: Create server
+- name: Create server "{{ instance_name }}"
   openstack.cloud.server:
     state: present
     name: "{{ instance_name }}-cifmw"
@@ -25,12 +25,14 @@
     network: "{{ instance_network }}"
   register: result
 
-- name: Add hosts
+- name: Add to Ansible inventory "{{ instance_name }}"
   ansible.builtin.add_host:
     name: "{{ instance_name }}"
     ansible_ssh_user: cloud-user
     ansible_host: "{{ result.openstack.accessIPv4 }}"
     groups: nodepool
+    # todo: add nodepool instance id
+    # nodepool: "{{ decoded_inventory[item]['nodepool'] }}"
 
 # - name: End execution
 #   ansible.builtin.meta: "end_play"

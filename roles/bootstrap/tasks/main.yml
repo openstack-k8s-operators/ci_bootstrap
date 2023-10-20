@@ -16,10 +16,7 @@
 
 - name: Create nodes to test this role locally outside CI
   ansible.builtin.include_tasks: non_zuul.yml
-  when: "{{ testing_mode | default(false) }}"
-
-# - name: Validate the input data
-#   ansible.builtin.import_tasks: network-validate.yml
+  tags: [never, local]
 
 # Note: Now we should be at the point should be the same as Zuul executer starts
 

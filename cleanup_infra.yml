@@ -37,12 +37,11 @@
       openstack.cloud.server:
         name: compute-0-cifmw
         state: absent
-  when: local | bool
 
 - name: Cleanup network
   environment:
     OS_CLOUD: "{{ crc_ci_bootstrap_cloud_name }}"
-  when: cleanup_network | bool
+  tags: cleanup_network
   block:
     - name: Delete keypair
       openstack.cloud.keypair:
@@ -54,10 +53,10 @@
         state: absent
         name: "{{ bootstrap_security_group_name }}"
 
-    - name: End execution
-      ansible.builtin.meta: "end_play"
-  # always:
-  #   - name: Remove clouds.yml secret
-  #     file:
-  #       path: "{{ bootstrap_ci_cloud_yml_secret_path }}"
-  #       state: absent
+  always:
+    - name: Remove clouds.yml secret
+      file:
+        path: "{{ bootstrap_clouds_yaml }}"
+        state: absent
+      when:
+        - inventory_hostname != 'localhost'

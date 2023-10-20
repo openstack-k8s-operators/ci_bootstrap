@@ -18,8 +18,9 @@
   ansible.builtin.debug:
     var: crc_ci_bootstrap_networking
 
+# todo
 # - name: Validate the input data
-#   ansible.builtin.import_tasks: bootstrap-ci-network-validate.yml
+#   ansible.builtin.import_tasks: network-validate.yml
 
 - name: Create openstack config dir
   ansible.builtin.file:
@@ -37,9 +38,12 @@
   loop: "{{ hostvars.keys() }}"
 
 # zuul.build: 1dcaf86e72ec4400a8012f3892d815be
-- name: Set UUID when running in Zuul
+- name: Set global resource names as facts
   ansible.builtin.set_fact:
-    __postfix: "zuul-{{ zuul.build[0:8] }}"
+    crc_ci_bootstrap_network_name: "zuul-ci-net-{{ zuul.build[:8] }}"
+    crc_ci_bootstrap_subnet_name: "zuul-ci-subnet-{{ zuul.build[:8] }}"
+    crc_ci_bootstrap_router_name: "zuul-ci-subnet-router-{{ zuul.build[:8] }}"
+    cacheable: true
 
 - name: Install other packages
   become: true
@@ -51,9 +55,16 @@
 - name: Install required packages
   ansible.builtin.pip:
     name:
+      - "virtualenv"
       - "python-openstackclient"
       - "openstacksdk>=0.36,<0.99.0"
 
+- name: Install required packages
+  ansible.builtin.pip:
+    virtualenv: "{{ bootstrap_venv_dir }}"
+    name:
+      - "python-openstackclient"
+      - "openstacksdk"
 
 - name: Create the crc based CI environment
   block:
@@ -62,8 +73,63 @@
         src: clouds.yaml.j2
         dest: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
         mode: "0600"
-  always:
-    - name: Remove cloud_secrets file
-      ansible.builtin.file:
-        path: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
-        state: absent
+
+    - name: Create the default network, subnet and router (if necessary)
+      vars:
+        default_network_config: "{{ crc_ci_bootstrap_networking.networks.default }}"
+      ansible.builtin.import_tasks: create-default-resources.yml
+
+    - name: Create ports, VLANs and configure them on the instance
+      vars:
+        instance_id: "{{ hostvars[instance_item.key]['nodepool']['external_id'] }}"
+      ansible.builtin.include_tasks: create-attach-port.yml
+      loop: "{{ crc_ci_bootstrap_networking.instances | dict2items }}"
+      loop_control:
+        label: "{{ instance_item.key }}"
+        loop_var: instance_item
+
+    # - name: Display some data about network ports
+    #   ansible.builtin.command:
+    #     cmd: "openstack port list --network {{ crc_ci_bootstrap_network_name }}"
+    #   register: crc_ci_bootstrap_global_port_list_out
+    #   delay: "{{ crc_ci_bootstrap_openstack_cmd_delay_value }}"
+    #   retries: "{{ crc_ci_bootstrap_openstack_cmd_retries_value }}"
+    #   until: crc_ci_bootstrap_global_port_list_out.rc == 0
+
+    # - name: Display server configuration
+    #   vars:
+    #     instance_id: "{{ hostvars[item]['nodepool']['external_id'] }}"
+    #   ansible.builtin.command:
+    #     cmd: openstack server show {{ instance_id }}
+    #   loop: "{{ hostvars.keys() }}"
+    #   loop_control:
+    #     label: "{{ item }}"
+    #     pause: "{{ crc_ci_bootstrap_pause_max_value | random }}"
+    #   register: crc_ci_bootstrap_server_show_out
+    #   delay: "{{ crc_ci_bootstrap_openstack_cmd_delay_value }}"
+    #   retries: "{{ crc_ci_bootstrap_openstack_cmd_retries_value }}"
+    #   until: crc_ci_bootstrap_server_show_out.rc == 0
+
+    # - name: Fetch underneath provider DNSs
+    #   ansible.builtin.include_tasks: bootstrap-ci-network-fetch-provider-dns.yml
+
+    # - name: Save networking data to file for further usage
+    #   vars:
+    #     content:
+    #       crc_ci_bootstrap_networks_out: "{{ crc_ci_bootstrap_networks_out | default({}) }}"
+    #       crc_ci_bootstrap_provider_dns: "{{ crc_ci_bootstrap_provider_dns | default([]) }}"
+    #   become: true
+    #   delegate_to: "{{ item }}"
+    #   ansible.builtin.copy:
+    #     dest: /etc/ci/env/networking-info.yml
+    #     content: "{{ content | to_nice_yaml }}"
+    #     owner: root
+    #     group: root
+    #     mode: '0644'
+    #   loop: "{{ hostvars.keys() }}"
+
+  # always:
+  #   - name: Remove cloud_secrets file
+  #     ansible.builtin.file:
+  #       path: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
+  #       state: absent

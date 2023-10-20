@@ -20,10 +20,14 @@
   roles:
     - role: "bootstrap"
       when: false
-
   tasks:
     - name: Cleanup infra
-      ansible.builtin.include_tasks: cleanup_infra.yml
+      ansible.builtin.import_tasks: cleanup_infra.yml
+      when:
+        - zuul is defined
+
+    - name: End execution
+      ansible.builtin.meta: "end_play"
       when:
         - zuul is defined
 
@@ -35,5 +39,4 @@
       when: false
   tasks:
     - name: Cleanup infra
-      ansible.builtin.include_tasks: cleanup_infra.yml
-      when: local | bool
+      ansible.builtin.import_tasks: cleanup_infra.yml

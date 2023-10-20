@@ -17,23 +17,50 @@
 # This task only runs locally and will set up instances
 - name: Tasks to run local
   hosts: localhost
-  roles:
-    - role: "bootstrap"
-      when:
-        - local | bool
+  tags: ['never', 'local']
   environment:
     OS_CLOUD: "{{ crc_ci_bootstrap_cloud_name }}"
-  vars:
-    testing_mode: true
+  tasks:
+    - name: Run tasks/non_zuul instead of 'main'
+      ansible.builtin.include_role:
+        name: bootstrap
+        tasks_from: non_zuul
+      # tags: always
+
+
+- name: Add hosts to skip VM creation
+  hosts: localhost
+  tags: ['never', 'inject']
+  tasks:
+    # todo: check file exists
+    - name: Read the content of the inventory file
+      ansible.builtin.slurp:
+        src: inventory.yaml
+      register: inventory_file_content
+
+    - name: Decode the inventory content
+      ansible.builtin.set_fact:
+        decoded_inventory: "{{ inventory_file_content.content | b64decode | from_yaml }}"
+
+    - name: Add hosts
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        ansible_ssh_user: "{{ decoded_inventory[item]['ansible_ssh_user'] }}"
+        ansible_host: "{{ decoded_inventory[item]['ansible_host'] }}"
+        groups: "{{ decoded_inventory[item]['groups'].keys() }}"
+        nodepool: "{{ decoded_inventory[item]['nodepool'] }}"
+      loop: "{{ decoded_inventory.controller.groups.all }}"
 
 # Note: this may not be required in Zuul
 - name: Bootstrap playbook
   # Don't gather facts automatically because that will trigger
   # a connection, which needs to check the remote host key
   gather_facts: false
+  tags: always
   hosts: nodepool
   roles:
     - role: "bootstrap"
+      when: false
   tasks:
     - name: Check known_hosts for {{ inventory_hostname }}
       delegate_to: localhost
@@ -64,7 +91,12 @@
 
 - name: Tasks to run on ansible controller
   hosts: controller
-  roles:
-    - role: "bootstrap"
+  tags: always
   environment:
     OS_CLOUD: "{{ crc_ci_bootstrap_cloud_name }}"
+  tasks:
+    - name: Run tasks/in_zuul.yaml instead of 'main'
+      ansible.builtin.include_role:
+        name: bootstrap
+        tasks_from: in_zuul
+      tags: always

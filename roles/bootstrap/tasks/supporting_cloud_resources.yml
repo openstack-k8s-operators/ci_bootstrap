@@ -24,7 +24,7 @@
     port_range_max: 22
     remote_ip_prefix: 0.0.0.0/0
 
-# Note: I stopped working on this because the API is so slow 
+# Note: I stopped working on this because the API is so slow
 # and the server create fails with a nice error anyway
 # ++++++
 # - name: Check image

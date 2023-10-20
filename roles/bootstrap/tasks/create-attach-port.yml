@@ -1,0 +1,95 @@
+---
+# - name: Print the host networking data
+#   ansible.builtin.debug:
+#     var: instance_item
+
+- name: Create the private network parent port
+  vars:
+    default_net_fixed_ip: "{{ instance_item.value.networks.default.ip }}"
+  openstack.cloud.port:
+    name: "{{ instance_item.key }}-{{ instance_id }}"
+    network: "{{ crc_ci_bootstrap_private_net_create_yaml.network.id }}"
+  register: crc_ci_bootstrap_instance_parent_port_create_out
+
+- name: Print the host networking data
+  ansible.builtin.debug:
+    msg: "{{ crc_ci_bootstrap_instance_parent_port_create_out }}"
+
+- name: Set common facts for further usage
+  ansible.builtin.set_fact:
+    crc_ci_bootstrap_instance_parent_port_create_yaml: "{{ crc_ci_bootstrap_instance_parent_port_create_out | from_yaml }}"
+    crc_ci_bootstrap_instance_default_net_config: "{{ crc_ci_bootstrap_networking.networks.default }}"
+    crc_ci_bootstrap_instance_nm_vlan_networks: >-
+      {{
+        instance_item.value.networks |
+        dict2items |
+        rejectattr('key', 'equalto', 'default')
+      }}
+    cacheable: true
+
+- name: "Create the trunk port for instance: {{ instance_item.key }}"
+  when: crc_ci_bootstrap_instance_nm_vlan_networks | length > 0
+  ansible.builtin.command:
+    cmd: >-
+      {{ bootstrap_venv_dir }}/bin/openstack network trunk create
+      --parent-port {{ crc_ci_bootstrap_instance_parent_port_create_yaml.port.id }}
+      zuul-ci-trunk-{{ instance_item.key }}-{{ instance_id }}
+      -f yaml
+  register: crc_ci_bootstrap_instance_trunk_creation_out
+  failed_when: >-
+    crc_ci_bootstrap_instance_trunk_creation_out.rc != 0 and
+    (
+      not 'is currently in use' in
+        (
+          crc_ci_bootstrap_instance_trunk_creation_out.stderr |
+          default(crc_ci_bootstrap_instance_trunk_creation_out.stdout, true) |
+          lower
+        )
+    )
+  changed_when: crc_ci_bootstrap_instance_trunk_creation_out.rc == 0
+
+
+- name: Print the host networking data
+  when: crc_ci_bootstrap_instance_nm_vlan_networks | length > 0
+  ansible.builtin.debug:
+    msg: "{{ crc_ci_bootstrap_instance_trunk_creation_out.stdout }}"
+
+- name: "Attach the port to the instance: {{ instance_item.key }}"
+  ansible.builtin.command:
+    cmd: >-
+      {{ bootstrap_venv_dir }}/bin/openstack server add port
+      {{ instance_id }}
+      {{ crc_ci_bootstrap_instance_parent_port_create_yaml.port.id }}
+  register: crc_ci_bootstrap_instance_server_add_port_out
+  # until: crc_ci_bootstrap_instance_server_add_port_out.rc == 0
+  tags: add_port
+  failed_when: >-
+    crc_ci_bootstrap_instance_server_add_port_out.rc != 0 and
+    (
+      not 'is still in use' in
+        (
+          crc_ci_bootstrap_instance_server_add_port_out.stderr |
+          default(crc_ci_bootstrap_instance_server_add_port_out.stdout, true) |
+          lower
+        )
+    )
+  changed_when: crc_ci_bootstrap_instance_server_add_port_out.rc == 0
+
+- name: Port attach details
+  ansible.builtin.debug:
+    msg: "{{ crc_ci_bootstrap_instance_server_add_port_out }}"
+
+- name: Create VLANs ports and trunk
+  when: crc_ci_bootstrap_instance_nm_vlan_networks | length > 0
+  block:
+    - name: Create VLANs ports and attach them to the trunk
+      ansible.builtin.include_tasks: instance-add-vlan.yml
+      loop: "{{ crc_ci_bootstrap_instance_nm_vlan_networks }}"
+      loop_control:
+        label: "{{ instance_net_item.key }}"
+        loop_var: instance_net_item
+        # pause: "{{ bootstrap_pause_max_value | random }}"
+
+# - name: Print the host networking data
+#   ansible.builtin.debug:
+#     msg: "{{ crc_ci_bootstrap_instance_wait_device_up_out }}"

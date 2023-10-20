@@ -46,7 +46,7 @@
     unknown_nets: "{{ item.value.networks.keys() | reject('in', crc_ci_bootstrap_networking.networks.keys()) }}"
   ansible.builtin.assert:
     that: unknown_nets | length == 0
-    msg: "Host {{ item.key }} contains unknown nets: {{ unknown_nets |join(', ') }}"
+    msg: "Host {{ item.key }} contains unknown nets: {{ unknown_nets | join(', ') }}"
     quiet: true
   loop: "{{ crc_ci_bootstrap_networking.instances | dict2items }}"
   loop_control:
@@ -55,14 +55,14 @@
 - name: Assert that all instances has in range fixed IP for each net
   vars:
     invalid_range_instance_ips: >-
-      {%- set non_net_ips=[] -%}
+      {%- set non_net_ips = [] -%}
       {%- for net, net_data in item.value.networks.items() -%}
-      {%- set ipnet=crc_ci_bootstrap_networking.networks[net].range -%}
+      {%- set ipnet = crc_ci_bootstrap_networking.networks[net].range -%}
       {%- if net_data and 'ip' in net_data and net_data['ip'] and not (ipnet | ansible.utils.network_in_usable(net_data['ip'])) -%}
       {%- set _ = non_net_ips.append(net_data['ip']) -%}
       {%- endif -%}
       {%- endfor -%}
-      {{ non_net_ips  }}
+      {{ non_net_ips }}
   ansible.builtin.assert:
     that: invalid_range_instance_ips | length == 0
     quiet: true
