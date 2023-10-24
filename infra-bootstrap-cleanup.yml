@@ -14,29 +14,50 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-# This will execute when ran inside Zuul to use the controller to cleanup resources
-- name: Cleanup infra
-  hosts: controller
-  roles:
-    - role: "bootstrap"
-      when: false
+- name: Add hosts to skip VM creation
+  hosts: localhost
+  tags: ['never', 'inject']
   tasks:
-    - name: Cleanup infra
-      ansible.builtin.import_tasks: cleanup_infra.yml
-      when:
-        - zuul is defined
+    # todo: check file exists
+    - name: Read the content of the inventory file
+      ansible.builtin.slurp:
+        src: inventory.yaml
+      register: inventory_file_content
 
-    - name: End execution
-      ansible.builtin.meta: "end_play"
-      when:
-        - zuul is defined
+    - name: Decode the inventory content
+      ansible.builtin.set_fact:
+        decoded_inventory: "{{ inventory_file_content.content | b64decode | from_yaml }}"
+
+    - name: Add hosts
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        ansible_ssh_user: "{{ decoded_inventory[item]['ansible_ssh_user'] }}"
+        ansible_host: "{{ decoded_inventory[item]['ansible_host'] }}"
+        groups: "{{ decoded_inventory[item]['groups'].keys() }}"
+        nodepool: "{{ decoded_inventory[item]['nodepool'] }}"
+      loop: "{{ decoded_inventory.controller.groups.all }}"
+
+
+# This will execute when ran inside Zuul to use the controller to cleanup resources
+- name: Cleanup networking resources
+  hosts: controller
+  environment:
+    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
+  tags: always
+  tasks:
+    - name: Run tasks/cleanup_networking.yaml instead of 'main'
+      ansible.builtin.include_role:
+        name: bootstrap
+        tasks_from: cleanup_networking
 
 # When ran inside Zuul, this task is skipped, when ran locally it will use your machine to delete network and compute.
-- name: Cleanup Instances
+- name: Cleanup testing resources
   hosts: localhost
-  roles:
-    - role: "bootstrap"
-      when: false
+  environment:
+    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
+  tags: [never, local]
   tasks:
-    - name: Cleanup infra
-      ansible.builtin.import_tasks: cleanup_infra.yml
+    - name: Run tasks/cleanup_testing_resources.yaml instead of 'main'
+      ansible.builtin.include_role:
+        name: bootstrap
+        tasks_from: cleanup_testing_resources

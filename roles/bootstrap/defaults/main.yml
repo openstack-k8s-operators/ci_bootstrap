@@ -18,19 +18,16 @@
 # All variables intended for modification should be placed in this file.
 # All variables within this role should have a prefix of "cifmw_bootstrap"
 
-bootstrap_instance_network_name: "ci-net-test"
-bootstrap_instance_subnet_name: "ci-subnet-test"
-bootstrap_instance_router_name: "ci-subnet-router-test"
+cifmw_bootstrap_instance_network_name: "ci-net-test"
+cifmw_bootstrap_instance_subnet_name: "ci-subnet-test"
+cifmw_bootstrap_instance_router_name: "ci-subnet-router-test"
+cifmw_bootstrap_public_key_file: "{{ ansible_user_dir }}/.ssh/id_ed25519.pub"
+cifmw_bootstrap_keypair_name: "{{ ansible_env.USER }}-key"
+cifmw_bootstrap_clouds_yaml: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
+cifmw_bootstrap_security_group_name: "ssh_icmp"
+cifmw_bootstrap_venv_dir: "{{ ansible_user_dir }}/bootstrap-venv"
 
-bootstrap_keypair_name: "{{ ansible_env.USER }}-key"
-bootstrap_clouds_yaml: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
-bootstrap_security_group_name: "ssh_icmp"
-
-bootstrap_pause_max_value: "{{ crc_ci_bootstrap_pause_max | default(3) }}"
-
-bootstrap_venv_dir: "{{ ansible_user_dir }}/bootstrap-venv"
-
-bootstrap_networking:
+crc_ci_bootstrap_networking:
   networks:
     default:
       mtu: 1500
@@ -74,5 +71,6 @@ bootstrap_networking:
           config_nm: false
 
 
-bootstrap_openstack_cmd_retries_value: "{{ crc_ci_bootstrap_openstack_cmd_retries | default(10) }}"
-bootstrap_openstack_cmd_delay_value: "{{ crc_ci_bootstrap_openstack_cmd_delay | default(5) }}"
+cifmw_bootstrap_openstack_cmd_retries_value: "{{ crc_ci_bootstrap_openstack_cmd_retries | default(10) }}"
+cifmw_bootstrap_openstack_cmd_delay_value: "{{ crc_ci_bootstrap_openstack_cmd_delay | default(5) }}"
+cifmw_bootstrap_pause_max_value: "{{ crc_ci_bootstrap_pause_max | default(3) }}"

@@ -31,8 +31,5 @@
     ansible_ssh_user: cloud-user
     ansible_host: "{{ result.openstack.accessIPv4 }}"
     groups: nodepool
-    # todo: add nodepool instance id
-    # nodepool: "{{ decoded_inventory[item]['nodepool'] }}"
-
-# - name: End execution
-#   ansible.builtin.meta: "end_play"
+    nodepool: { 'external_id': "{{ result.openstack.id }}" }
+    

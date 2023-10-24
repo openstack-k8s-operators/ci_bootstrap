@@ -14,10 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-# - name: Debuger
-#   ansible.builtin.debug:
-#     msg: "{{ zuul.build }}"
-
 - name: Read clouds.yaml
   ansible.builtin.include_vars:
     file: "{{ cifmw_bootstrap_clouds_yaml }}"
@@ -40,7 +36,7 @@
     instance_image: "{{ item.value.image }}"
     instance_keypair: "{{ item.value.keypair }}"
     instance_security_group: "{{ item.value.security_group }}"
-    instance_network: "{{ bootstrap_router_net }}"
+    instance_network: "{{ cifmw_bootstrap_router_net }}"
   loop: "{{ crc_ci_bootstrap_networking.instances | dict2items }}"
   tags: create_resources
 

@@ -16,47 +16,32 @@
 
 - name: Read clouds.yaml
   ansible.builtin.include_vars:
-    file: "{{ bootstrap_clouds_yaml }}"
+    file: "{{ cifmw_bootstrap_clouds_yaml }}"
     name: clouds_yaml
 
 - name: Cleanup instances
+  openstack.cloud.server:
+    state: absent
+    name: "{{ item.key }}-cifmw"
+  loop: "{{ crc_ci_bootstrap_networking.instances | dict2items }}"
+  tags: create_resources
+
+- name: Cleanup resources
   environment:
-    OS_CLOUD: "{{ crc_ci_bootstrap_cloud_name }}"
-  block:
-    - name: Delete controller-cifmw
-      openstack.cloud.server:
-        name: controller-cifmw
-        state: absent
-
-    - name: Delete crc-cifmw
-      openstack.cloud.server:
-        name: crc-cifmw
-        state: absent
-
-    - name: Delete compute-0-cifmw
-      openstack.cloud.server:
-        name: compute-0-cifmw
-        state: absent
-
-- name: Cleanup network
-  environment:
-    OS_CLOUD: "{{ crc_ci_bootstrap_cloud_name }}"
-  tags: cleanup_network
+    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
+  tags: cleanup_resources
   block:
     - name: Delete keypair
       openstack.cloud.keypair:
         state: absent
-        name: "{{ bootstrap_keypair_name }}"
+        name: "{{ cifmw_bootstrap_keypair_name }}"
 
     - name: Delete SG
       openstack.cloud.security_group:
         state: absent
-        name: "{{ bootstrap_security_group_name }}"
+        name: "{{ cifmw_bootstrap_security_group_name }}"
 
-  always:
-    - name: Remove clouds.yml secret
-      file:
-        path: "{{ bootstrap_clouds_yaml }}"
-        state: absent
-      when:
-        - inventory_hostname != 'localhost'
+- name: Cleanup inventory
+  ansible.builtin.file:
+    path: "inventory.yaml"
+    state: absent

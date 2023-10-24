@@ -19,7 +19,7 @@
   hosts: localhost
   tags: ['never', 'local']
   environment:
-    OS_CLOUD: "{{ crc_ci_bootstrap_cloud_name }}"
+    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   tasks:
     - name: Run tasks/non_zuul instead of 'main'
       ansible.builtin.include_role:
@@ -93,7 +93,7 @@
   hosts: controller
   tags: always
   environment:
-    OS_CLOUD: "{{ crc_ci_bootstrap_cloud_name }}"
+    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   tasks:
     - name: Run tasks/in_zuul.yaml instead of 'main'
       ansible.builtin.include_role:

@@ -18,15 +18,5 @@
   ansible.builtin.include_tasks: non_zuul.yml
   tags: [never, local]
 
-# Note: Now we should be at the point should be the same as Zuul executer starts
-
-# Note: I don't think we need to use venv in this situation
-# - name: Install required packages
-#   ansible.builtin.pip:
-#     virtualenv: "{{ ansible_user_dir }}/bootstrap-venv"
-#     name: python-openstackclient
-
 - name: Tasks to run inside Zuul CI
   ansible.builtin.include_tasks: in_zuul.yml
-  when:
-    - zuul is defined

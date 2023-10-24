@@ -61,7 +61,7 @@
 
 - name: Install required packages
   ansible.builtin.pip:
-    virtualenv: "{{ bootstrap_venv_dir }}"
+    virtualenv: "{{ cifmw_bootstrap_venv_dir }}"
     name:
       - "python-openstackclient"
       - "openstacksdk"
@@ -92,8 +92,8 @@
     #   ansible.builtin.command:
     #     cmd: "openstack port list --network {{ crc_ci_bootstrap_network_name }}"
     #   register: crc_ci_bootstrap_global_port_list_out
-    #   delay: "{{ crc_ci_bootstrap_openstack_cmd_delay_value }}"
-    #   retries: "{{ crc_ci_bootstrap_openstack_cmd_retries_value }}"
+    #   delay: "{{ cifmw_bootstrap_openstack_cmd_delay_value }}"
+    #   retries: "{{ cifmw_bootstrap_openstack_cmd_retries_value }}"
     #   until: crc_ci_bootstrap_global_port_list_out.rc == 0
 
     # - name: Display server configuration
@@ -104,10 +104,10 @@
     #   loop: "{{ hostvars.keys() }}"
     #   loop_control:
     #     label: "{{ item }}"
-    #     pause: "{{ crc_ci_bootstrap_pause_max_value | random }}"
+    #     pause: "{{ cifmw_bootstrap_pause_max_value | random }}"
     #   register: crc_ci_bootstrap_server_show_out
-    #   delay: "{{ crc_ci_bootstrap_openstack_cmd_delay_value }}"
-    #   retries: "{{ crc_ci_bootstrap_openstack_cmd_retries_value }}"
+    #   delay: "{{ cifmw_bootstrap_openstack_cmd_delay_value }}"
+    #   retries: "{{ cifmw_bootstrap_openstack_cmd_retries_value }}"
     #   until: crc_ci_bootstrap_server_show_out.rc == 0
 
     # - name: Fetch underneath provider DNSs
@@ -128,8 +128,8 @@
     #     mode: '0644'
     #   loop: "{{ hostvars.keys() }}"
 
-  # always:
-  #   - name: Remove cloud_secrets file
-  #     ansible.builtin.file:
-  #       path: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
-  #       state: absent
+  always:
+    - name: Remove cloud_secrets file
+      ansible.builtin.file:
+        path: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
+        state: absent
