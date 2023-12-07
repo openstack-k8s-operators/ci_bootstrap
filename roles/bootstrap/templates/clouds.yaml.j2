@@ -2,7 +2,8 @@ clouds:
   {{ cifmw_bootstrap_cloud_name }}:
     identity_api_version: {{ cloud_secrets[ cifmw_bootstrap_cloud_name ].identity_api_version }}
     region_name: {{ cloud_secrets[ cifmw_bootstrap_cloud_name ].region_name }}
-{% if "applicationcredential" in cloud_secrets[ cifmw_bootstrap_cloud_name ].auth_type %}
+{% if cloud_secrets[ cifmw_bootstrap_cloud_name ].auth_type is defined and
+ "applicationcredential" in cloud_secrets[ cifmw_bootstrap_cloud_name ].auth_type %}
     auth:
         auth_url: {{ cloud_secrets[ cifmw_bootstrap_cloud_name ].auth_url }}
         application_credential_id: {{ cloud_secrets[ cifmw_bootstrap_cloud_name ].auth.application_credential_id }}
