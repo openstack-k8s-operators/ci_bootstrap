@@ -1,0 +1,54 @@
+---
+# Copyright Red Hat, Inc.
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+- name: Read clouds.yaml
+  ansible.builtin.include_vars:
+    file: "{{ cifmw_bootstrap_clouds_yaml }}"
+    name: clouds_yaml
+
+- name: Set resource postfix when running in outside Zuul
+  ansible.builtin.set_fact:
+    __postfix: "local"
+
+- name: Ensure supporting cloud resources are created
+  ansible.builtin.include_tasks: supporting_cloud_resources.yml
+  tags: create_resources
+
+- name: Create instances
+  ansible.builtin.include_tasks:
+    create_instance.yml
+  vars:
+    instance_name: "{{ item.key }}"
+    instance_flavor: "{{ item.value.flavor }}"
+    instance_image: "{{ item.value.image }}"
+    instance_keypair: "{{ item.value.keypair }}"
+    instance_security_group: "{{ item.value.security_group }}"
+    instance_network: "{{ cifmw_bootstrap_router_net }}"
+  loop: "{{ crc_ci_bootstrap_networking.instances | dict2items }}"
+  tags: create_resources
+
+- name: Set var
+  ansible.builtin.set_fact:
+    zuul:
+      build: 1dcaf86e72ec4400a8012f3892d815be
+
+- name: Save the in-memory inventory to a YAML file
+  ansible.builtin.copy:
+    content: "{{ hostvars | to_nice_yaml }}"
+    dest: inventory.yaml
+
+- name: End execution
+  ansible.builtin.meta: "end_play"
