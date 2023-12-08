@@ -67,6 +67,8 @@
       - "openstacksdk"
 
 - name: Create the crc based CI environment
+  environment:
+    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   block:
     - name: Write file
       ansible.builtin.template:
