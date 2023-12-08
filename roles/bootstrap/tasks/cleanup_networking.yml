@@ -26,6 +26,8 @@
   register: crc_ci_bootstrap_skip_file_stat
 
 - name: Cleanup the CI CRC environment network
+  environment:
+    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   when: >-
     not (
       (crc_ci_bootstrap_skip_cleanup | default(false) | bool) or
@@ -35,7 +37,6 @@
     subnet_network_name: "{{ crc_ci_bootstrap_subnet_name | default('zuul-ci-subnet-' + zuul.build[:8]) }}"
     router_name: "{{ crc_ci_bootstrap_router_name | default('zuul-ci-subnet-router-' + zuul.build[:8]) }}"
     private_network_name: "{{ crc_ci_bootstrap_network_name | default('zuul-ci-net-' + zuul.build[:8]) }}"
-
   block:
     - name: Generate clouds config from cloud_secrets secret
       ansible.builtin.template:
