@@ -90,13 +90,13 @@
         label: "{{ instance_item.key }}"
         loop_var: instance_item
 
-    # - name: Display some data about network ports
-    #   ansible.builtin.command:
-    #     cmd: "openstack port list --network {{ crc_ci_bootstrap_network_name }}"
-    #   register: crc_ci_bootstrap_global_port_list_out
-    #   delay: "{{ cifmw_bootstrap_openstack_cmd_delay_value }}"
-    #   retries: "{{ cifmw_bootstrap_openstack_cmd_retries_value }}"
-    #   until: crc_ci_bootstrap_global_port_list_out.rc == 0
+    - name: Display some data about network ports
+      ansible.builtin.command:
+        cmd: "openstack port list --network {{ crc_ci_bootstrap_network_name }}"
+      register: crc_ci_bootstrap_global_port_list_out
+      delay: "{{ cifmw_bootstrap_openstack_cmd_delay_value }}"
+      retries: "{{ cifmw_bootstrap_openstack_cmd_retries_value }}"
+      until: crc_ci_bootstrap_global_port_list_out.rc == 0
 
     # - name: Display server configuration
     #   vars:
@@ -112,23 +112,23 @@
     #   retries: "{{ cifmw_bootstrap_openstack_cmd_retries_value }}"
     #   until: crc_ci_bootstrap_server_show_out.rc == 0
 
-    # - name: Fetch underneath provider DNSs
-    #   ansible.builtin.include_tasks: bootstrap-ci-network-fetch-provider-dns.yml
+    - name: Fetch underneath provider DNSs
+      ansible.builtin.include_tasks: fetch-provider-dns.yml
 
-    # - name: Save networking data to file for further usage
-    #   vars:
-    #     content:
-    #       crc_ci_bootstrap_networks_out: "{{ crc_ci_bootstrap_networks_out | default({}) }}"
-    #       crc_ci_bootstrap_provider_dns: "{{ crc_ci_bootstrap_provider_dns | default([]) }}"
-    #   become: true
-    #   delegate_to: "{{ item }}"
-    #   ansible.builtin.copy:
-    #     dest: /etc/ci/env/networking-info.yml
-    #     content: "{{ content | to_nice_yaml }}"
-    #     owner: root
-    #     group: root
-    #     mode: '0644'
-    #   loop: "{{ hostvars.keys() }}"
+    - name: Save networking data to file for further usage
+      vars:
+        content:
+          crc_ci_bootstrap_networks_out: "{{ crc_ci_bootstrap_networks_out | default({}) }}"
+          crc_ci_bootstrap_provider_dns: "{{ crc_ci_bootstrap_provider_dns | default([]) }}"
+      become: true
+      delegate_to: "{{ item }}"
+      ansible.builtin.copy:
+        dest: /etc/ci/env/networking-info.yml
+        content: "{{ content | to_nice_yaml }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop: "{{ hostvars.keys() }}"
 
   always:
     - name: Remove cloud_secrets file
