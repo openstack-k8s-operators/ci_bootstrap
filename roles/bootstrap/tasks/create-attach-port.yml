@@ -85,6 +85,73 @@
     )
   changed_when: crc_ci_bootstrap_instance_server_add_port_out.rc == 0
 
+- name: Wait till the interface exists
+  delegate_to: "{{ instance_item.key }}"
+  ansible.builtin.command:
+    cmd: "ip -j link"
+  register: crc_ci_bootstrap_instance_wait_device_up_out
+  until: >-
+      (crc_ci_bootstrap_instance_wait_device_up_out.stdout | from_json) |
+      selectattr(
+          'address',
+          'equalto',
+          crc_ci_bootstrap_instance_parent_port_create_yaml.port.mac_address | lower
+      ) | length > 0
+  retries: 30
+  delay: 2
+
+- name: Prepare interface data to be used configuring trunk and vlan ifaces
+  vars:
+    ip_link_json_out: >-
+      {{
+        (crc_ci_bootstrap_instance_wait_device_up_out.stdout | from_json) |
+        selectattr(
+          'address',
+          'equalto',
+          crc_ci_bootstrap_instance_parent_port_create_yaml.port.mac_address | lower
+        ) | first
+      }}
+    ip_with_prefix: >-
+      {{
+        instance_item.value.networks.default.ip + "/" +
+        (crc_ci_bootstrap_instance_default_net_config.range | ansible.utils.ipaddr('prefix') | string)
+      }}
+    ip_gateway: >-
+      {{
+        crc_ci_bootstrap_instance_default_net_config.gw |
+        default(
+          crc_ci_bootstrap_instance_default_net_config.range |
+          ansible.utils.ipaddr('net') |
+          ansible.utils.ipmath(1)
+        )
+      }}
+  ansible.builtin.set_fact:
+    crc_ci_bootstrap_networks_out: >-
+      {{
+        crc_ci_bootstrap_networks_out |
+        default({}) |
+        combine(
+          {
+            instance_item.key: {
+              'default': {
+                'iface': ip_link_json_out.ifname,
+                'mac': crc_ci_bootstrap_instance_parent_port_create_yaml.port.mac_address | lower,
+                'mtu': crc_ci_bootstrap_instance_default_net_config.mtu | default(ip_link_json_out.mtu),
+                'connection':
+                  (
+                    'ci-private-network'
+                    if (crc_ci_bootstrap_instance_default_net_config.config_nm | default(true) | bool)
+                    else omit
+                  ),
+                'ip': ip_with_prefix,
+                'gw': ip_gateway,
+                'dns': crc_ci_bootstrap_instance_default_net_config.dns | default(omit),
+              }
+            }
+          }, recursive=true)
+      }}
+    cacheable: true
+
 - name: Port attach details
   ansible.builtin.debug:
     msg: "{{ crc_ci_bootstrap_instance_server_add_port_out }}"
