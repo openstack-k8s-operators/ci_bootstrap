@@ -135,15 +135,3 @@
       ansible.builtin.file:
         path: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
         state: absent
-
-- hosts: crc
-  tasks:
-    - name: Reconfigure kubelet service
-      ansible.builtin.include_tasks: reconfigure-kubelet.yaml
-
-    - name: Reboot host after kubelet is reconfigured
-      become: true
-      ansible.builtin.reboot:
-
-    - include_role:
-        name: start-zuul-console
