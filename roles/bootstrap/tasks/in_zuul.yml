@@ -52,18 +52,12 @@
       - python3-pip
     state: present
 
-- name: Install collection openstack.cloud
-  community.general.ansible_galaxy_install:
-    type: collection
-    name: openstack.cloud
-
 - name: Install required packages
   ansible.builtin.pip:
     name:
       - "virtualenv"
       - "python-openstackclient"
-      - "openstacksdk"
-      # - "openstacksdk>=0.36,<0.99.0"
+      - "openstacksdk>=0.36,<0.99.0"
 
 - name: Install required packages
   ansible.builtin.pip:
@@ -140,4 +134,9 @@
     - name: Remove cloud_secrets file
       ansible.builtin.file:
         path: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
+        state: absent
+
+    - name: Remove openstacksdk to avoid conflicts
+      ansible.builtin.pip:
+        name: openstacksdk
         state: absent

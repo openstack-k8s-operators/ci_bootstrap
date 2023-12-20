@@ -20,6 +20,10 @@
     state: directory
     mode: '0755'
 
+- name: Make sure that we have the expected openstacksdk
+  ansible.builtin.pip:
+    name: "openstacksdk>=0.36,<0.99.0"
+
 - name: Check for cleanup skip flag file presence
   ansible.builtin.stat:
     path: "{{ ansible_user_dir }}/crc-ci-bootstrap-skip-cleanup"
