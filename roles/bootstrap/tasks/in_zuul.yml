@@ -52,6 +52,11 @@
       - python3-pip
     state: present
 
+- name: Install collection openstack.cloud
+  community.general.ansible_galaxy_install:
+    type: collection
+    name: openstack.cloud
+
 - name: Install required packages
   ansible.builtin.pip:
     name:
