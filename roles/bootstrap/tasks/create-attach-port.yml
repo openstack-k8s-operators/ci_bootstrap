@@ -20,6 +20,9 @@
   openstack.cloud.port:
     name: "{{ instance_item.key }}-{{ instance_id }}"
     network: "{{ crc_ci_bootstrap_private_net_create_yaml.network.id }}"
+    fixed_ips:
+      - ip_address: "{{ default_net_fixed_ip }}"
+        subnet_id: "{{ crc_ci_bootstrap_private_subnet_create_yaml.subnet.id }}"
   register: crc_ci_bootstrap_instance_parent_port_create_out
 
 - name: Print the host networking data
