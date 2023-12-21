@@ -28,6 +28,7 @@
     network_name: "{{ crc_ci_bootstrap_private_net_create_out.network.id }}"
     name: "{{ crc_ci_bootstrap_subnet_name }}"
     cidr: "{{ default_network_config.range }}"
+    is_dhcp_enabled: false
   register: crc_ci_bootstrap_private_subnet_create_out
 
 - name: Set yaml returned data for further usage
