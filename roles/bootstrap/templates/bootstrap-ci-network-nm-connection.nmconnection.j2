@@ -1,0 +1,25 @@
+[connection]
+id={{ iface_info.connection }}
+uuid={{ 99999999 | random | to_uuid }}
+type=ethernet
+autoconnect=true
+
+[ethernet]
+mac-address={{ iface_info.mac | trim | lower }}
+mtu={{ iface_info.mtu }}
+
+[ipv4]
+method=manual
+addresses={{ iface_info.ip }}
+{% if iface_info.gw is defined and iface_info.gw != '' -%}
+gateway={{ iface_info.gw }}
+{% endif -%}
+{% if iface_info.dns is defined and iface_info.dns | length > 0 -%}
+dns={{ (iface_info.dns | join(";")) + ";" }}
+{% endif -%}
+
+[ipv6]
+addr-gen-mode=stable-privacy
+method=disabled
+
+[proxy]
