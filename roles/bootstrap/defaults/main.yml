@@ -21,56 +21,16 @@
 cifmw_bootstrap_instance_network_name: "ci-net-test"
 cifmw_bootstrap_instance_subnet_name: "ci-subnet-test"
 cifmw_bootstrap_instance_router_name: "ci-subnet-router-test"
+cifmw_bootstrap_network_default_router_net: "public"
 cifmw_bootstrap_public_key_file: "{{ ansible_user_dir }}/.ssh/id_ed25519.pub"
 cifmw_bootstrap_keypair_name: "{{ ansible_env.USER }}-key"
 cifmw_bootstrap_clouds_yaml: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
 cifmw_bootstrap_security_group_name: "ssh_icmp"
 cifmw_bootstrap_venv_dir: "{{ ansible_user_dir }}/bootstrap-venv"
 
-crc_ci_bootstrap_networking:
-  networks:
-    default:
-      mtu: 1500
-      range: 192.168.122.0/24
-    internal-api:
-      vlan: 20
-      range: 172.17.0.0/24
-    storage:
-      vlan: 21
-      range: 172.18.0.0/24
-    tenant:
-      vlan: 22
-      range: 172.19.0.0/24
-  instances:
-    controller:
-      networks:
-        default:
-          ip: 192.168.122.11
-    crc:
-      networks:
-        default:
-          ip: 192.168.122.10
-        internal-api:
-          ip: 172.17.0.5
-        storage:
-          ip: 172.18.0.5
-        tenant:
-          ip: 172.19.0.5
-    compute-0:
-      networks:
-        default:
-          ip: 192.168.122.100
-        internal-api:
-          ip: 172.17.0.100
-          config_nm: false
-        storage:
-          ip: 172.18.0.100
-          config_nm: false
-        tenant:
-          ip: 172.19.0.100
-          config_nm: false
-
-
 cifmw_bootstrap_openstack_cmd_retries_value: "{{ crc_ci_bootstrap_openstack_cmd_retries | default(10) }}"
 cifmw_bootstrap_openstack_cmd_delay_value: "{{ crc_ci_bootstrap_openstack_cmd_delay | default(5) }}"
 cifmw_bootstrap_pause_max_value: "{{ crc_ci_bootstrap_pause_max | default(3) }}"
+
+cifmw_bootstrap_ci_infra_dir: "/etc/ci/env"
+cifmw_bootstrap_net_env_def_path: "{{ cifmw_bootstrap_ci_infra_dir }}/networking-environment-definition.yml"

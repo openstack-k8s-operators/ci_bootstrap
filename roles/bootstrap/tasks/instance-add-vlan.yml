@@ -20,7 +20,7 @@
 
 - name: "Create the VLAN port for instance: {{ instance_item.key }}"
   vars:
-    vlan_tag: "{{ crc_ci_bootstrap_networking.networks[instance_net_item.key].vlan }}"
+    vlan_tag: "{{ crc_ci_bootstrap_networking.networks[instance_net_item.key].vlan_id }}"
   openstack.cloud.port:
     name: "{{ instance_item.key }}-{{ instance_id }}-{{ vlan_tag }}"
     network: "{{ crc_ci_bootstrap_private_net_create_yaml.id }}"
@@ -28,8 +28,8 @@
 
 - name: "Add the VLAN port to the trunk for instance: {{ instance_item.key }}"
   vars:
-    vlan_id: "{{ crc_ci_bootstrap_networking.networks[instance_net_item.key].vlan }}"
-    port_id: "{{ instance_item.key }}-{{ instance_id }}-{{ crc_ci_bootstrap_networking.networks[instance_net_item.key].vlan }}"
+    vlan_id: "{{ crc_ci_bootstrap_networking.networks[instance_net_item.key].vlan_id }}"
+    port_id: "{{ instance_item.key }}-{{ instance_id }}-{{ crc_ci_bootstrap_networking.networks[instance_net_item.key].vlan_id }}"
     parent_port_id: "zuul-ci-trunk-{{ instance_item.key }}-{{ instance_id }}"
   ansible.builtin.command:
     cmd: >-

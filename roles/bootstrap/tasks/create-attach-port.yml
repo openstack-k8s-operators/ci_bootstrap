@@ -16,7 +16,7 @@
 
 - name: Create the private network parent port
   vars:
-    default_net_fixed_ip: "{{ instance_item.value.networks.default.ip }}"
+    default_net_fixed_ip: "{{ instance_item.value.networks.default.ip_v4 }}"
   openstack.cloud.port:
     name: "{{ instance_item.key }}-{{ instance_id }}"
     network: "{{ crc_ci_bootstrap_private_net_create_yaml.network.id }}"
@@ -61,7 +61,6 @@
         )
     )
   changed_when: crc_ci_bootstrap_instance_trunk_creation_out.rc == 0
-
 
 - name: Print the host networking data
   when: crc_ci_bootstrap_instance_nm_vlan_networks | length > 0
@@ -116,7 +115,7 @@
       }}
     ip_with_prefix: >-
       {{
-        instance_item.value.networks.default.ip + "/" +
+        instance_item.value.networks.default.ip_v4 + "/" +
         (crc_ci_bootstrap_instance_default_net_config.range | ansible.utils.ipaddr('prefix') | string)
       }}
     ip_gateway: >-
@@ -153,6 +152,18 @@
             }
           }, recursive=true)
       }}
+    ci_bootstrap_networks_interfaces_out: >-
+      {{
+        ci_bootstrap_networks_interfaces_out |
+        default({}) |
+        combine(
+          {
+            instance_item.key: {
+              'mac': crc_ci_bootstrap_instance_parent_port_create_yaml.port.mac_address | lower,
+              'network': 'default'
+            }
+          }, recursive=true)
+      }}
     cacheable: true
 
 - name: Port attach details
@@ -179,19 +190,19 @@
             community.general.random_mac(
               seed=(
                   (crc_ci_bootstrap_instance_parent_port_create_yaml.port.mac_address | lower) +
-                  (network_config.vlan | string)
+                  (network_config.vlan_id | string)
                 )
             ) | lower
           }}
-        iface_name: "{{ parent_net_info.iface + '.' + (network_config.vlan | string) }}"
+        iface_name: "{{ parent_net_info.iface + '.' + (network_config.vlan_id | string) }}"
         # VLAN iface MTU is the parent MTU minus the 802.1Q header size
         iface_mtu: "{{ parent_net_info.mtu | int - 4 }}"
         ip_with_prefix: >-
           {{
-            instance_net_item.value.ip + "/" +
-            (network_config.range | ansible.utils.ipaddr('prefix') | string)
+            instance_net_item.value.ip_v4 + "/" +
+            (network_config.network_v4 | ansible.utils.ipaddr('prefix') | string)
           }}
-        iface_connection_name: "{{ 'ci-private-network-' + (network_config.vlan | string) }}"
+        iface_connection_name: "{{ 'ci-private-network-' + (network_config.vlan_id | string) }}"
       ansible.builtin.set_fact:
         crc_ci_bootstrap_networks_out: >-
           {{
@@ -201,18 +212,18 @@
                 instance_item.key: {
                   instance_net_item.key: {
                     'iface': iface_name,
-                    'vlan': network_config.vlan,
+                    'vlan': network_config.vlan_id,
                     'parent_iface': parent_net_info.iface,
                     'connection':
                       (
                         iface_connection_name
-                        if (instance_net_item.value.config_nm | default(true) | bool)
+                        if (not instance_net_item.value.skip_nm | default(false) | bool)
                         else omit
                       ),
                     'mac': iface_mac,
                     'mtu': iface_mtu,
                     'ip': ip_with_prefix,
-                    'dns': network_config.dns | default(omit),
+                    'dns': network_config.dns_v4 | default(omit),
                   }
                 }
               }, recursive=true)
