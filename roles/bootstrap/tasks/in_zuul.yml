@@ -14,13 +14,24 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-- name: Debug parameters
-  ansible.builtin.debug:
-    var: crc_ci_bootstrap_networking
-
 # todo
 # - name: Validate the input data
 #   ansible.builtin.import_tasks: network-validate.yml
+
+- name: Load network environment definition from file
+  when: "crc_ci_bootstrap_networking is not defined or 
+         crc_ci_bootstrap_networking | length == 0"
+  block:
+    - name: Check for network environment definition file
+      ansible.builtin.stat:
+        path: "{{ cifmw_bootstrap_net_env_def_path }}"
+      register: _net_env_file_stat
+
+    - name: Load network info from file
+      when: "_net_env_file_stat.stat.exists"
+      ansible.builtin.include_vars:
+        file: "{{ cifmw_bootstrap_net_env_def_path }}"
+        name: crc_ci_bootstrap_networking
 
 - name: Create openstack config dir
   ansible.builtin.file:
@@ -124,6 +135,19 @@
       delegate_to: "{{ item }}"
       ansible.builtin.copy:
         dest: /etc/ci/env/networking-info.yml
+        content: "{{ content | to_nice_yaml }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop: "{{ hostvars.keys() }}"
+
+    - name: Save networking interface info for the mapper
+      vars:
+        content: "{{ crc_ci_bootstrap_networks_out | default({}) }}"
+      become: true
+      delegate_to: "{{ item }}"
+      ansible.builtin.copy:
+        dest: /etc/ci/env/ci-bootstrap-network-interfaces.yml
         content: "{{ content | to_nice_yaml }}"
         owner: root
         group: root

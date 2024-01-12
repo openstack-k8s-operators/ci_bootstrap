@@ -27,7 +27,7 @@
     state: present
     network_name: "{{ crc_ci_bootstrap_private_net_create_out.network.id }}"
     name: "{{ crc_ci_bootstrap_subnet_name }}"
-    cidr: "{{ default_network_config.range }}"
+    cidr: "{{ default_network_config.network_v4 }}"
     enable_dhcp: false
   register: crc_ci_bootstrap_private_subnet_create_out
 
@@ -43,7 +43,7 @@
     - name: Create router
       openstack.cloud.router:
         name: "{{ crc_ci_bootstrap_router_name }}"
-        network: "{{ default_network_config.router_net | default('public') }}"
+        network: "{{ default_network_config.router_net | default(cifmw_bootstrap_network_default_router_net) }}"
         interfaces:
           - "{{ crc_ci_bootstrap_private_subnet_create_out.subnet.id }}"
       register: crc_ci_bootstrap_private_router_create_out
