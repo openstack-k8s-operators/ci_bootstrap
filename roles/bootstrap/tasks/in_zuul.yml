@@ -53,7 +53,6 @@
     mode: '0755'
   loop: "{{ hostvars.keys() }}"
 
-# zuul.build: 1dcaf86e72ec4400a8012f3892d815be
 - name: Set global resource names as facts
   ansible.builtin.set_fact:
     crc_ci_bootstrap_network_name: "zuul-ci-net-{{ zuul.build[:8] }}"
@@ -166,7 +165,7 @@
         path: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
         state: absent
 
-    - name: Remove openstacksdk to avoid conflicts
+    - name: Update openstacksdk to latest
       ansible.builtin.pip:
         name: openstacksdk
-        state: absent
+        state: latest
