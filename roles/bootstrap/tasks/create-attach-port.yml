@@ -116,13 +116,13 @@
     ip_with_prefix: >-
       {{
         instance_item.value.networks.default.ip_v4 + "/" +
-        (crc_ci_bootstrap_instance_default_net_config.range | ansible.utils.ipaddr('prefix') | string)
+        (crc_ci_bootstrap_instance_default_net_config.network_v4 | ansible.utils.ipaddr('prefix') | string)
       }}
     ip_gateway: >-
       {{
-        crc_ci_bootstrap_instance_default_net_config.gw |
+        crc_ci_bootstrap_instance_default_net_config.gw_v4 |
         default(
-          crc_ci_bootstrap_instance_default_net_config.range |
+          crc_ci_bootstrap_instance_default_net_config.network_v4 |
           ansible.utils.ipaddr('net') |
           ansible.utils.ipmath(1)
         )
@@ -142,12 +142,12 @@
                 'connection':
                   (
                     'ci-private-network'
-                    if (crc_ci_bootstrap_instance_default_net_config.config_nm | default(true) | bool)
+                    if (not crc_ci_bootstrap_instance_default_net_config.skip_nm | default(false) | bool)
                     else omit
                   ),
                 'ip': ip_with_prefix,
                 'gw': ip_gateway,
-                'dns': crc_ci_bootstrap_instance_default_net_config.dns | default(omit),
+                'dns': crc_ci_bootstrap_instance_default_net_config.dns_v4 | default(omit),
               }
             }
           }, recursive=true)
