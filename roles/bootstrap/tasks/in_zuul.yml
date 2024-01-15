@@ -113,20 +113,6 @@
       retries: "{{ cifmw_bootstrap_openstack_cmd_retries_value }}"
       until: crc_ci_bootstrap_global_port_list_out.rc == 0
 
-    # - name: Display server configuration
-    #   vars:
-    #     instance_id: "{{ hostvars[item]['nodepool']['external_id'] }}"
-    #   ansible.builtin.command:
-    #     cmd: openstack server show {{ instance_id }}
-    #   loop: "{{ hostvars.keys() }}"
-    #   loop_control:
-    #     label: "{{ item }}"
-    #     pause: "{{ cifmw_bootstrap_pause_max_value | random }}"
-    #   register: crc_ci_bootstrap_server_show_out
-    #   delay: "{{ cifmw_bootstrap_openstack_cmd_delay_value }}"
-    #   retries: "{{ cifmw_bootstrap_openstack_cmd_retries_value }}"
-    #   until: crc_ci_bootstrap_server_show_out.rc == 0
-
     - name: Fetch underneath provider DNSs
       ansible.builtin.include_tasks: fetch-provider-dns.yml
 
