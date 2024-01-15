@@ -19,7 +19,7 @@
 #   ansible.builtin.import_tasks: network-validate.yml
 
 - name: Load network environment definition from file
-  when: "crc_ci_bootstrap_networking is not defined or 
+  when: "crc_ci_bootstrap_networking is not defined or
          crc_ci_bootstrap_networking | length == 0"
   block:
     - name: Check for network environment definition file
@@ -27,11 +27,16 @@
         path: "{{ cifmw_bootstrap_net_env_def_path }}"
       register: _net_env_file_stat
 
-    - name: Load network info from file
+    - name: Slurp network environment definition file
       when: "_net_env_file_stat.stat.exists"
-      ansible.builtin.include_vars:
-        file: "{{ cifmw_bootstrap_net_env_def_path }}"
-        name: crc_ci_bootstrap_networking
+      register: _ci_bootstrap_net_env_slurp
+      ansible.builtin.slurp:
+        src: "{{ cifmw_bootstrap_net_env_def_path }}"
+
+    - name: Save ci boostrap networking info
+      ansible.builtin.set_fact:
+        crc_ci_bootstrap_networking: "{{ _ci_bootstrap_net_env_slurp['content'] | b64decode | from_yaml }}"
+        cacheable: true
 
 - name: Create openstack config dir
   ansible.builtin.file:
