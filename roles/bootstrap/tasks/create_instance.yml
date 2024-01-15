@@ -32,4 +32,3 @@
     ansible_host: "{{ result.openstack.accessIPv4 }}"
     groups: nodepool
     nodepool: { 'external_id': "{{ result.openstack.id }}" }
-    
