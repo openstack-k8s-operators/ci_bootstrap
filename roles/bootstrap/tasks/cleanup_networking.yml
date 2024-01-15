@@ -119,3 +119,8 @@
       ansible.builtin.file:
         path: "{{ cifmw_bootstrap_clouds_yaml }}"
         state: absent
+
+    - name: Update openstacksdk to latest
+      ansible.builtin.pip:
+        name: openstacksdk
+        state: latest
