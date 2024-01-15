@@ -148,7 +148,8 @@
 
     - name: Save networking interface info for the mapper
       vars:
-        content: "{{ crc_ci_bootstrap_networks_out | default({}) }}"
+        content:
+          cifmw_networking_mapper_ifaces_info: "{{ ci_bootstrap_networks_interfaces_out | default({}) }}"
       become: true
       delegate_to: "{{ item }}"
       ansible.builtin.copy:
