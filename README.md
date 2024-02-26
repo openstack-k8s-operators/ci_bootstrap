@@ -11,7 +11,30 @@ Locally: This will run additional steps to first configure instances and access 
 In CI: In this mode instance creation is completly skipped as instances will be provided to the role from Zuul node pool.
 
 To deploy locally, pass the local tag to do the initial deployment of instances that would be handled by Zuul's `nodepool`:
-`ansible-playbook infra-bootstrap.yml -e @my_vars.yml --tags local`
+`ansible-playbook infra-bootstrap.yml -e @my_vars.yml --tags **local**`
+
+The instances to deploy in the local cloud is defined in the `cifmw_bootstap_local_instances` variable. For example:
+```
+cifmw_bootstap_local_instances:
+  controller:
+    flavor: m1.large
+    image: CentOS-Stream-GenericCloud-9
+    keypair: "{{ cifmw_bootstrap_keypair_name }}"
+    security_group: "{{ cifmw_bootstrap_security_group_name }}"
+    network: "{{ cifmw_bootstrap_network_default_router_net }}"
+  crc:
+    flavor: m1.xlarge
+    image: crc-image
+    keypair: "{{ cifmw_bootstrap_keypair_name }}"
+    security_group: "{{ cifmw_bootstrap_security_group_name }}"
+    network: "{{ cifmw_bootstrap_network_default_router_net }}"
+  compute-0:
+    flavor: m1.large
+    image: CentOS-Stream-GenericCloud-9
+    keypair: "{{ cifmw_bootstrap_keypair_name }}"
+    security_group: "{{ cifmw_bootstrap_security_group_name }}"
+    network: "{{ cifmw_bootstrap_network_default_router_net }}"
+```
 
 While testing, you may want to skip instance creation after the first deployment, this can by done with the inject tag which will read from the generated inventory file rather than deploying fresh instances.
 `ansible-playbook infra-bootstrap.yml -e @my_vars.yml --tags inject`
@@ -23,15 +46,15 @@ When running in zuul, no tags will be used as that will be the default operation
 
 Example `my_vars.yml` for local testing:
 ```
-cifmw_bootstrap_router_net: provider_net_shared_3
+local_net_env_def: networking-environment-definition.yml
+cifmw_bootstrap_network_default_router_net: provider_net_shared_3
 cifmw_bootstrap_public_key_file: "{{ ansible_user_dir }}/.ssh/id_ed25519.pub"
 cifmw_bootstrap_cloud_name: ci_framework
 cloud_secrets:
   ci_framework:
     auth_url: "https://openstack.local:13000"
-    auth:
-      application_credential_id: "<redacted>"
-      application_credential_secret: "<redacted>"
+    application_credential_id: "<redacted>"
+    application_credential_secret: "<redacted>"
     region_name: "regionOne"
     interface: "public"
     identity_api_version: 3

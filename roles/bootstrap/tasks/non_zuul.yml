@@ -29,21 +29,16 @@
 
 - name: Create instances
   ansible.builtin.include_tasks:
-    create_instance.yml
+    create-instance.yml
   vars:
     instance_name: "{{ item.key }}"
     instance_flavor: "{{ item.value.flavor }}"
     instance_image: "{{ item.value.image }}"
     instance_keypair: "{{ item.value.keypair }}"
     instance_security_group: "{{ item.value.security_group }}"
-    instance_network: "{{ cifmw_bootstrap_router_net }}"
-  loop: "{{ crc_ci_bootstrap_networking.instances | dict2items }}"
+    instance_network: "{{ item.value.network }}"
+  loop: "{{ cifmw_bootstap_local_instances | dict2items }}"
   tags: create_resources
-
-- name: Set var
-  ansible.builtin.set_fact:
-    zuul:
-      build: 1dcaf86e72ec4400a8012f3892d815be
 
 - name: Save the in-memory inventory to a YAML file
   ansible.builtin.copy:

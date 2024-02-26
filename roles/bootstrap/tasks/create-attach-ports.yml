@@ -1,0 +1,111 @@
+---
+# Copyright Red Hat, Inc.
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+- name: Create port
+  openstack.cloud.port:
+    name: "{{ net_item.key }}-{{ instance_id }}"
+    network: "{{ net_resources_out[net_item.key].network.id }}"
+    # Deliberately do not set an IP address - managed externally by network mapper
+    fixed_ips: []
+  register: _ports_out
+  loop: "{{ instance_item.value.networks | dict2items }}"
+  loop_control:
+    label: "{{ net_item.key }}"
+    loop_var: net_item
+
+- name: Update fact instance_port_map
+  ansible.builtin.set_fact:
+    instance_port_map: >-
+      {{ instance_port_map | default({}) | combine(
+          {
+            instance_item.key:
+              dict(
+                _ports_out.results | 
+                map(attribute='net_item.key') |
+                zip(_ports_out.results |
+                map(attribute='port.id')))
+          }
+        )
+      }}
+
+- name: Update fact instance_mac_addr_map
+  ansible.builtin.set_fact:
+    instance_mac_addr_map: >-
+      {{ instance_mac_addr_map | default({}) | combine(
+          {
+            instance_item.key:
+              dict(
+                _ports_out.results |
+                map(attribute='net_item.key') |
+                zip(_ports_out.results |
+                map(attribute='port.mac_address')))
+          }
+        )
+      }}
+
+- name: Create trunk
+  ansible.builtin.command:
+    cmd: >-
+      {{ cifmw_bootstrap_venv_dir }}/bin/openstack network trunk create
+      --parent-port {{ instance_port_map[instance_item.key][net_item.key] }}
+      {% for net_name, net in instance_item.value.networks.items()
+            if net.trunk_parent is defined
+            and net.trunk_parent == net_item.key %}
+      --subport port={{ instance_port_map[instance_item.key][net_name] }},segmentation-type=vlan,segmentation-id={{ net.vlan_id }}
+      {% endfor %}
+      {{ net_item.key }}-trunk-{{ instance_id }}
+      -f value -c id
+  register: _create_trunk
+  when: net_item.value.is_trunk_parent | default(false)
+  loop: "{{ instance_item.value.networks | dict2items }}"
+  loop_control:
+    label: "{{ net_item.key }}"
+    loop_var: net_item
+  failed_when: >-
+    _create_trunk.rc != 0 and
+    (
+      not 'is currently in use and is not eligible for use as a parent port' in
+        (
+          _create_trunk.stderr |
+          default(_create_trunk.stdout, true) |
+          lower
+        )
+    )
+  changed_when: _create_trunk.rc == 0
+
+- name: Attach ports to instances
+  ansible.builtin.command:
+    cmd: >-
+      {{ cifmw_bootstrap_venv_dir }}/bin/openstack server add port
+      {{ instance_id }}
+      {{ instance_port_map[instance_item.key][net_item.key] }}
+  register: _attach_port
+  when: net_item.value.trunk_parent is not defined
+  loop: "{{ instance_item.value.networks | dict2items }}"
+  loop_control:
+    label: "{{ net_item.key }}"
+    loop_var: net_item
+  failed_when: >-
+    _attach_port.rc != 0 and
+    (
+      not 'is still in use' in
+        (
+          _attach_port.stderr |
+          default(_attach_port.stdout, true) |
+          lower
+        )
+    )
+  changed_when: _attach_port.rc == 0

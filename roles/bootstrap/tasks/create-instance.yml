@@ -25,10 +25,15 @@
     network: "{{ instance_network }}"
   register: result
 
+- name: Get server info "{{ instance_name }}"
+  openstack.cloud.server_info:
+    name: "{{ result.server.id }}"
+  register: server_info
+
 - name: Add to Ansible inventory "{{ instance_name }}"
   ansible.builtin.add_host:
     name: "{{ instance_name }}"
     ansible_ssh_user: cloud-user
-    ansible_host: "{{ result.openstack.accessIPv4 }}"
+    ansible_host: "{{ server_info.servers[0].access_ipv4 }}"
     groups: nodepool
-    nodepool: { 'external_id': "{{ result.openstack.id }}" }
+    nodepool: { 'external_id': "{{ result.server.id }}" }

@@ -18,7 +18,21 @@
   hosts: localhost
   tags: ['never', 'inject']
   tasks:
-    # todo: check file exists
+    - name: Set zuul var
+      ansible.builtin.set_fact:
+        zuul:
+          build: 1dcaf86e72ec4400a8012f3892d815be
+
+    - name: Check if inventory file exists
+      ansible.builtin.stat:
+        path: inventory.yaml
+      register: _inventory_file_stat
+
+    - name: Fail if inventory file does not exist
+      when: _inventory_file_stat.stat.exists is false
+      ansible.builtin.fail:
+        msg: "Inventory file (inventory.yaml) not found."
+
     - name: Read the content of the inventory file
       ansible.builtin.slurp:
         src: inventory.yaml
@@ -38,26 +52,41 @@
       loop: "{{ decoded_inventory.controller.groups.all }}"
 
 
+- name: Set zuul variable if using inject or local
+  hosts: controller
+  tags: ['never', 'inject', 'local']
+  tasks:
+    - name: Set zuul var
+      ansible.builtin.set_fact:
+        zuul:
+          build: 1dcaf86e72ec4400a8012f3892d815be
+    - name: Copy network-environment-definition to controller
+      when: local_net_env_def is defined
+      become: true
+      ansible.builtin.copy:
+        dest: "{{ cifmw_bootstrap_net_env_def_path }}"
+        src: "{{ local_net_env_def }}"
+
 # This will execute when ran inside Zuul to use the controller to cleanup resources
-- name: Cleanup networking resources
+- name: Cleanup in zuul resources
   hosts: controller
   environment:
     OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   tags: always
   tasks:
-    - name: Run tasks/cleanup_networking.yaml instead of 'main'
+    - name: Run tasks/in_zuul_cleanup.yml instead of 'main'
       ansible.builtin.include_role:
         name: bootstrap
-        tasks_from: cleanup_networking
+        tasks_from: in_zuul_cleanup
 
-# When ran inside Zuul, this task is skipped, when ran locally it will use your machine to delete network and compute.
-- name: Cleanup testing resources
+# When ran inside Zuul, this task is skipped, when run locally it will use your machine to delete network and compute.
+- name: Cleanup Non-Zuul testing resources
   hosts: localhost
   environment:
     OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   tags: [never, local]
   tasks:
-    - name: Run tasks/cleanup_testing_resources.yaml instead of 'main'
+    - name: Run tasks/non_zuul_cleanup.yml instead of 'main'
       ansible.builtin.include_role:
         name: bootstrap
-        tasks_from: cleanup_testing_resources
+        tasks_from: non_zuul_cleanup

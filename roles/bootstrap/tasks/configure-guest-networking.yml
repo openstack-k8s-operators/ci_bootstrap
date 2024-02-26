@@ -1,0 +1,193 @@
+---
+# Copyright Red Hat, Inc.
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+- name: Wait till the interface exists
+  delegate_to: "{{ instance_item.key }}"
+  ansible.builtin.command:
+    cmd: "ip -json link"
+  register: ci_bootstrap_instance_wait_device_up_out
+  until: >-
+      (ci_bootstrap_instance_wait_device_up_out.stdout | from_json) |
+      selectattr(
+          'address',
+          'equalto',
+          instance_mac_addr_map[instance_item.key][net_item.key] | lower
+      ) | length > 0
+  retries: 30
+  delay: 2
+  when: 
+    - net_item.value.trunk_parent is not defined
+    - net_item.value.skip_nm is false
+  loop: "{{ instance_item.value.networks | dict2items }}"
+  loop_control:
+    label: "{{ instance_item.key }}-{{ net_item.key }}"
+    loop_var: net_item
+
+- name: Prepare interface data to be used configuring trunk and vlan ifaces
+  ansible.builtin.set_fact:
+    _ifaces_out: >-
+      {{ _ifaces_out | default({}) |
+        combine(
+          {
+            instance_item.key: {
+              item.net_item.key: item.stdout | from_json | 
+                selectattr('address', 'equalto',
+                  instance_mac_addr_map[instance_item.key][item.net_item.key] | lower
+                ) | first
+            }
+          }
+        )
+      }}
+  when: item.skipped is not defined
+  loop: "{{ ci_bootstrap_instance_wait_device_up_out.results }}"
+
+- name: Populate crc_ci_bootstrap_networks_out fact - non VLAN ports
+  ansible.builtin.set_fact:
+    crc_ci_bootstrap_networks_out: >-
+      {{ crc_ci_bootstrap_networks_out | default({}) |
+        combine(
+          {
+            instance_item.key: {
+              net_item.key: {
+                'connection': 'ci-' + net_item.key,
+                'mac': instance_mac_addr_map[instance_item.key][net_item.key] | lower,
+                'iface': _ifaces_out[instance_item.key][net_item.key].ifname,
+                'mtu': crc_ci_bootstrap_networking.networks[net_item.key].mtu | default(_ifaces_out[instance_item.key][net_item.key].mtu),
+              }
+            }
+          }
+        , recursive=true)
+      }}
+  when: net_item.value.trunk_parent is not defined
+  loop: "{{ instance_item.value.networks | dict2items }}"
+  loop_control:
+    label: "{{ instance_item.key }}-{{ net_item.key }}"
+    loop_var: net_item
+
+- name: Populate crc_ci_bootstrap_networks_out fact - VLAN ports
+  ansible.builtin.set_fact:
+    crc_ci_bootstrap_networks_out: >-
+      {{ crc_ci_bootstrap_networks_out | default({}) |
+        combine(
+          {
+            instance_item.key: {
+              net_item.key: {
+                'connection': 'ci-' + net_item.key + '-' + net_item.value.vlan_id | string,
+                'mac': instance_mac_addr_map[instance_item.key][net_item.key] | lower,
+                'parent_iface':
+                  _ifaces_out[instance_item.key][
+                    crc_ci_bootstrap_networking.instances[instance_item.key].networks[net_item.key].trunk_parent].ifname,
+                'mtu': crc_ci_bootstrap_networking.networks[net_item.key].mtu |
+                        default(_ifaces_out[instance_item.key][
+                          crc_ci_bootstrap_networking.instances[instance_item.key].networks[net_item.key].trunk_parent].mtu),
+                'vlan': net_item.value.vlan_id,
+              }
+            }
+          }
+        , recursive=true)
+      }}
+  when: net_item.value.trunk_parent is defined
+  loop: "{{ instance_item.value.networks | dict2items }}"
+  loop_control:
+    label: "{{ instance_item.key }}-{{ net_item.key }}"
+    loop_var: net_item
+
+- name: Add IPv4 to crc_ci_bootstrap_networks_out fact
+  ansible.builtin.set_fact:
+    crc_ci_bootstrap_networks_out: >-
+      {{ crc_ci_bootstrap_networks_out | default({}) |
+        combine(
+          {
+            instance_item.key: {
+              net_item.key: {
+                'ip': crc_ci_bootstrap_networking.instances[instance_item.key].networks[net_item.key].ip_v4
+                      + '/' +
+                      crc_ci_bootstrap_networking.networks[net_item.key].network_v4 |
+                      ansible.utils.ipaddr('prefix') | string,
+                'gw': crc_ci_bootstrap_networking.networks[net_item.key].gw_v4 | default(''),
+                'dns': crc_ci_bootstrap_networking.networks[net_item.key].dns_v4 | default([]),
+              }
+            }
+          }
+        , recursive=true)
+      }}
+  when: net_item.value.network_v4 is defined
+  loop: "{{ instance_item.value.networks | dict2items }}"
+  loop_control:
+    label: "{{ instance_item.key }}-{{ net_item.key }}"
+    loop_var: net_item
+
+- name: Add IPv6 to crc_ci_bootstrap_networks_out fact
+  ansible.builtin.set_fact:
+    crc_ci_bootstrap_networks_out: >-
+      {{ crc_ci_bootstrap_networks_out | default({}) |
+        combine(
+          {
+            instance_item.key: {
+              net_item.key: {
+                'ip_v6': crc_ci_bootstrap_networking.instances[instance_item.key].networks[net_item.key].ip_v6
+                         + '/' +
+                         crc_ci_bootstrap_networking.networks[net_item.key].network_v6 |
+                         ansible.utils.ipaddr('prefix') | string,
+                'gw_v6': crc_ci_bootstrap_networking.networks[net_item.key].gw_v6 | default(''),
+                'dns_v6': crc_ci_bootstrap_networking.networks[net_item.key].dns_v6 | default([]),
+              }
+            }
+          }
+        , recursive=true)
+      }}
+  when: net_item.value.network_v6 is defined
+  loop: "{{ instance_item.value.networks | dict2items }}"
+  loop_control:
+    label: "{{ instance_item.key }}-{{ net_item.key }}"
+    loop_var: net_item
+
+- name: Apply Network Manager changes in the target instance
+  delegate_to: "{{ instance_item.key }}"
+  block:
+    - name: Create NetworkManager configuration file for the trunk port
+      vars:
+        iface_info: "{{ item.value }}"
+      become: true
+      when: "iface_info.connection is defined and iface_info.connection != ''"
+      ansible.builtin.template:
+        src: >-
+          {{
+            'bootstrap-ci-network-vlan-nm-connection.nmconnection.j2'
+            if ('vlan' in iface_info) else 'bootstrap-ci-network-nm-connection.nmconnection.j2'
+          }}
+        dest: "/etc/NetworkManager/system-connections/{{ iface_info.connection }}.nmconnection"
+        mode: '0600'
+        owner: root
+        group: root
+      loop: "{{ crc_ci_bootstrap_networks_out[instance_item.key] | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: Refresh NetworkManager
+      become: true
+      ansible.builtin.systemd:
+        name: NetworkManager
+        state: restarted
+
+    - name: Debug fetch IP routes
+      register: crc_ci_bootstrap_host_routes_out
+      ansible.builtin.command:
+        cmd: "ip route"
+    
+    - name: Debug IP routes
+      ansible.builtin.debug:
+        var: crc_ci_bootstrap_host_routes_out

@@ -23,7 +23,7 @@
   openstack.cloud.server:
     state: absent
     name: "{{ item.key }}-cifmw"
-  loop: "{{ crc_ci_bootstrap_networking.instances | dict2items }}"
+  loop: "{{ cifmw_bootstap_local_instances | dict2items }}"
   tags: create_resources
 
 - name: Cleanup resources

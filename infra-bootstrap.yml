@@ -21,18 +21,31 @@
   environment:
     OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   tasks:
+    - name: Set zuul var
+      ansible.builtin.set_fact:
+        zuul:
+          build: 1dcaf86e72ec4400a8012f3892d815be
     - name: Run tasks/non_zuul instead of 'main'
       ansible.builtin.include_role:
         name: bootstrap
         tasks_from: non_zuul
       # tags: always
 
-
 - name: Add hosts to skip VM creation
   hosts: localhost
   tags: ['never', 'inject']
   tasks:
-    # todo: check file exists
+
+    - name: Check if inventory file exists
+      ansible.builtin.stat:
+        path: inventory.yaml
+      register: _inventory_file_stat
+
+    - name: Fail if inventory file does not exist
+      when: _inventory_file_stat.stat.exists is false
+      ansible.builtin.fail:
+        msg: "Inventory file (inventory.yaml) not found."
+
     - name: Read the content of the inventory file
       ansible.builtin.slurp:
         src: inventory.yaml
@@ -62,6 +75,11 @@
     - role: "bootstrap"
       when: false
   tasks:
+    - name: Wait a little to ensure nodes booted (local only)
+      ansible.builtin.pause:
+        minutes: 1
+      when: "'local' in ansible_run_tags"
+
     - name: Check known_hosts for {{ inventory_hostname }}
       delegate_to: localhost
       ansible.builtin.command:
@@ -88,6 +106,20 @@
         state: directory
         mode: '0755'
 
+- name: Set zuul variable if using inject or local
+  hosts: controller
+  tags: ['never', 'inject', 'local']
+  tasks:
+    - name: Set zuul var
+      ansible.builtin.set_fact:
+        zuul:
+          build: 1dcaf86e72ec4400a8012f3892d815be
+    - name: Copy network-environment-definition to controller
+      when: local_net_env_def is defined
+      become: true
+      ansible.builtin.copy:
+        dest: "{{ cifmw_bootstrap_net_env_def_path }}"
+        src: "{{ local_net_env_def }}"
 
 - name: Tasks to run on ansible controller
   hosts: controller

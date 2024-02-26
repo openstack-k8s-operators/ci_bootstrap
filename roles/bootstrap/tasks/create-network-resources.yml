@@ -1,0 +1,54 @@
+---
+# Copyright Red Hat, Inc.
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+- name: Create network
+  openstack.cloud.network:
+    state: present
+    name: "{{ network_item.key }}-cifmw-{{ zuul.build[:8] }}"
+    port_security_enabled: false
+  register: _network_out
+
+- name: Create subnet with gateway address
+  when: network_item.value.gw_v4 is defined
+  openstack.cloud.subnet:
+    state: present
+    network_name: "{{ _network_out.network.id }}"
+    name: "{{ network_item.key }}-subnet-cifmw-{{ zuul.build[:8] }}"
+    cidr: "{{ network_item.value.network_v4 }}"
+    gateway_ip: "{{ network_item.value.gw_v4 | default(none) }}"
+    dns_nameservers: "{{ network_item.value.dns_v4 }}"
+    enable_dhcp: false
+
+- name: Create subnet
+  when: network_item.value.gw_v4 is not defined
+  openstack.cloud.subnet:
+    state: present
+    network_name: "{{ _network_out.network.id }}"
+    name: "{{ network_item.key }}-subnet-cifmw-{{ zuul.build[:8] }}"
+    cidr: "{{ network_item.value.network_v4 }}"
+    dns_nameservers: "{{ network_item.value.dns_v4 }}"
+    enable_dhcp: false
+
+- name: Update fact net_resources_out
+  ansible.builtin.set_fact:
+    net_resources_out: >-
+      {{ net_resources_out | default({}) |
+        combine(
+          {
+            network_item.key: {'network': _network_out},
+          }
+        ) 
+      }}
