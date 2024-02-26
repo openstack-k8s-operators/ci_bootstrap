@@ -15,6 +15,9 @@ id={{ iface_info.vlan }}
 parent={{ iface_info.parent_iface }}
 
 [ipv4]
+{% if iface_info.ip is not defined -%}
+method=disabled
+{% else -%}
 method=manual
 addresses={{ iface_info.ip }}
 {% if iface_info.gw is defined and iface_info.gw != '' -%}
@@ -23,9 +26,21 @@ gateway={{ iface_info.gw }}
 {% if iface_info.dns is defined and iface_info.dns | length > 0 -%}
 dns={{ (iface_info.dns | join(";")) + ";" }}
 {% endif -%}
+{% endif -%}
 
 [ipv6]
 addr-gen-mode=stable-privacy
+{% if iface_info.ip_v6 is not defined -%}
 method=disabled
+{% else -%}
+method=manual
+addresses={{ iface_info.ip_v6 }}
+{% if iface_info.gw_v6 is defined and iface_info.gw_v6 != '' -%}
+gateway={{ iface_info.gw_v6 }}
+{% endif -%}
+{% if iface_info.dns_v6 is defined and iface_info.dns_v6 | length > 0 -%}
+dns={{ (iface_info.dns_v6 | join(";")) + ";" }}
+{% endif -%}
+{% endif -%}
 
 [proxy]

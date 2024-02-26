@@ -1,0 +1,74 @@
+---
+# Copyright Red Hat, Inc.
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+- name: Get ports attached to instances
+  openstack.cloud.port_info:
+    filters:
+      network_id: "{{ item.id }}"
+      device_owner: "compute:nova"
+  register: _instance_ports
+  loop: "{{ network_item }}"
+
+- name: Get ports attached to routers
+  openstack.cloud.port_info:
+    filters:
+      network_id: "{{ item.id }}"
+      device_owner: "network:router_interface"
+  register: _router_ports
+  loop: "{{ network_item }}"
+
+- name: Detach instance ports
+  ansible.builtin.command:
+    cmd: >-
+      echo "{{ cifmw_bootstrap_venv_dir }}/bin/openstack server remove port
+      {{ item.device_id }}
+      {{ item.id }}"
+  loop: "{{ _instance_ports.results | map(attribute='ports') | list | flatten }}"
+
+- name: Delete trunk
+  ansible.builtin.command:
+    cmd: >-
+      {{ cifmw_bootstrap_venv_dir }}/bin/openstack network trunk delete
+      {{ item.trunk_details.trunk_id }}
+  when: item.trunk_details
+  loop: "{{ _instance_ports.results | map(attribute='ports') | list | flatten }}"
+
+- name: Delete trunk sub ports
+  ansible.builtin.include_tasks: cleanup-trunk-subports.yml
+  when: port_item.trunk_details
+  loop: "{{ _instance_ports.results | map(attribute='ports') | list | flatten }}"
+  loop_control:
+    loop_var: port_item
+
+- name: Delete parent ports
+  openstack.cloud.port:
+    state: absent
+    name: "{{ item.id }}"
+  loop: "{{ _instance_ports.results | map(attribute='ports') | list | flatten }}"
+
+- name: Delete router
+  openstack.cloud.router:
+    state: absent
+    name: "{{ item.device_id }}"
+  loop: "{{ _router_ports.results | map(attribute='ports') | flatten }}"
+
+- name: Delete network
+  openstack.cloud.network:
+    state: absent
+    name: "{{ _net.id }}"
+  loop: "{{ network_item }}"
+  loop_control:
+    loop_var: _net
