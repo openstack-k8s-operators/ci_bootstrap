@@ -1,0 +1,66 @@
+---
+# Copyright Red Hat, Inc.
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+
+# Examples:
+#
+#   # Create a router with external gateway network
+#   ---
+#   networks:
+#     default:
+#       network_v4: 192.168.122.0/24
+#       gw_v4: 192.168.122.1
+#   routers:
+#     default:
+#       external_network: public
+#       networks:
+#         - default
+#
+#   # Create a router without external gatway network
+#   ---
+#   networks:
+#     network_a:
+#       network_v4: 192.168.122.0/24
+#       gw_v4: 192.168.122.1
+#     network_b:
+#       network_v4: 172.17.0.0/24
+#       gw_v4: 172.17.0.1
+#   routers:
+#     router_a_b:
+#       networks:
+#         - network_a
+#         - network_b
+
+- name: Set the router interfaces fact
+  ansible.builtin.set_fact:
+    router_interfaces: >-
+      {{
+        router_interfaces | default([]) + net_resources_out[item].network.subnet_ids
+      }}
+  loop: "{{ router_item.value.networks }}"
+
+- name: Create router
+  when: router_item.value.external_network is defined
+  openstack.cloud.router:
+    name: "cifmw-{{ router_item.key }}-{{ zuul.build[:8] }}"
+    network: "{{ router_item.value.external_network }}"
+    interfaces: "{{ router_interfaces }}"
+
+- name: Create router (no external gateway network)
+  when: router_item.value.external_network is not defined
+  openstack.cloud.router:
+    name: "cifmw-{{ router_item.key }}-{{ zuul.build[:8] }}"
+    interfaces: "{{ router_interfaces }}"

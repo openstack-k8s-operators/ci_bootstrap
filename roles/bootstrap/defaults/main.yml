@@ -17,7 +17,6 @@
 
 # All variables intended for modification should be placed in this file.
 # All variables within this role should have a prefix of "cifmw_bootstrap"
-cifmw_bootstrap_network_default_router_net: "public"
 cifmw_bootstrap_public_key_file: "{{ ansible_user_dir }}/.ssh/id_ed25519.pub"
 cifmw_bootstrap_keypair_name: "{{ ansible_env.USER }}-key"
 cifmw_bootstrap_clouds_yaml: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
