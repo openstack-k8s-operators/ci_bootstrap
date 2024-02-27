@@ -92,6 +92,13 @@
         label: "{{ network_item.key }}"
         loop_var: network_item
 
+    - name: Create the routers
+      ansible.builtin.include_tasks: create-router.yml
+      loop: "{{ crc_ci_bootstrap_networking.routers | default({}) | dict2items }}"
+      loop_control:
+        label: "{{ router_item.key }}"
+        loop_var: router_item
+
     - name: Create ports
       vars:
         instance_id: "{{ hostvars[instance_item.key]['nodepool']['external_id'] }}"

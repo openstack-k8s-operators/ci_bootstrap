@@ -48,7 +48,7 @@
       {{ net_resources_out | default({}) |
         combine(
           {
-            network_item.key: {'network': _network_out},
+            network_item.key: {'network': _network_out.network},
           }
         ) 
       }}
