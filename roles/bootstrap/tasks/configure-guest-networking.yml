@@ -48,7 +48,7 @@
                 ) | first
             }
           }
-        )
+        , recursive=true)
       }}
   when: item.skipped is not defined
   loop: "{{ ci_bootstrap_instance_wait_device_up_out.results }}"
