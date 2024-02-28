@@ -48,7 +48,7 @@
   ansible.builtin.set_fact:
     router_interfaces: >-
       {{
-        router_interfaces | default([]) + net_resources_out[item].network.subnet_ids
+        router_interfaces | default([]) + ci_bootstrap_os_networks[item].network.subnet_ids
       }}
   loop: "{{ router_item.value.networks }}"
 

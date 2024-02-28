@@ -42,10 +42,10 @@
     dns_nameservers: "{{ network_item.value.dns_v4 }}"
     enable_dhcp: false
 
-- name: Update fact net_resources_out
+- name: Update fact ci_bootstrap_os_networks
   ansible.builtin.set_fact:
-    net_resources_out: >-
-      {{ net_resources_out | default({}) |
+    ci_bootstrap_os_networks: >-
+      {{ ci_bootstrap_os_networks | default({}) |
         combine(
           {
             network_item.key: {'network': _network_out.network},

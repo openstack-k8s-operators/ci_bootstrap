@@ -60,6 +60,7 @@
       ansible.builtin.set_fact:
         zuul:
           build: 1dcaf86e72ec4400a8012f3892d815be
+
     - name: Copy network-environment-definition to controller
       when: local_net_env_def is defined
       become: true
@@ -70,8 +71,6 @@
 # This will execute when ran inside Zuul to use the controller to cleanup resources
 - name: Cleanup in zuul resources
   hosts: controller
-  environment:
-    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   tags: always
   tasks:
     - name: Run tasks/in_zuul_cleanup.yml instead of 'main'
@@ -82,8 +81,6 @@
 # When ran inside Zuul, this task is skipped, when run locally it will use your machine to delete network and compute.
 - name: Cleanup Non-Zuul testing resources
   hosts: localhost
-  environment:
-    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   tags: [never, local]
   tasks:
     - name: Run tasks/non_zuul_cleanup.yml instead of 'main'
