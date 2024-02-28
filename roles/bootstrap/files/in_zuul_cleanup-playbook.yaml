@@ -14,17 +14,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-- name: Run tasks/controller-pre.yml
-  ansible.builtin.include_tasks: controller-pre.yml
-
-- name: Tasks to run inside Zuul CI
-  ansible.builtin.command:
-    chdir: "{{ ansible_user_dir }}/src/github.com/openstack-k8s-operators/ci-bootstrap"
-    cmd: >-
-      {{ cifmw_bootstrap_venv_dir }}/bin/ansible-playbook in_zuul-playbook.yml
-      --connection local
-      --inventory localhost,
-      --extra-vars @/etc/ci/env/in_zuul-vars.yml
-
-- name: Run tasks/controller-post.yml
-  ansible.builtin.include_tasks: controller-post.yml
+- name: Cleanup tasks to run in controller
+  hosts: localhost
+  tasks:
+  - name: Cleanup Networks
+    ansible.builtin.include_role:
+      name: bootstrap
+      tasks_from: in_zuul/cleanup-networks.yml

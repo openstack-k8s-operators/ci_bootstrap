@@ -15,34 +15,13 @@
 # under the License.
 
 - name: Load network environment definition from file
-  when: "crc_ci_bootstrap_networking is not defined or
-         crc_ci_bootstrap_networking | length == 0"
-  block:
-    - name: Check for network environment definition file
-      ansible.builtin.stat:
-        path: "{{ cifmw_bootstrap_net_env_def_path }}"
-      register: _net_env_file_stat
-
-    - name: Slurp network environment definition file
-      when: "_net_env_file_stat.stat.exists"
-      register: _ci_bootstrap_net_env_slurp
-      ansible.builtin.slurp:
-        src: "{{ cifmw_bootstrap_net_env_def_path }}"
-
-    - name: Save ci boostrap networking info
-      ansible.builtin.set_fact:
-        crc_ci_bootstrap_networking: "{{ _ci_bootstrap_net_env_slurp['content'] | b64decode | from_yaml }}"
-        cacheable: true
+  ansible.builtin.include_tasks: load-input.yml
 
 - name: Create openstack config dir
   ansible.builtin.file:
     path: "{{ ansible_user_dir }}/.config/openstack/"
     state: directory
     mode: '0755'
-
-- name: Make sure that we have the expected openstacksdk
-  ansible.builtin.pip:
-    name: "openstacksdk>=1.0"
 
 - name: Check for cleanup skip flag file presence
   ansible.builtin.stat:
@@ -64,20 +43,14 @@
         dest: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
         mode: "0600"
 
-    - name: Get the networks
-      openstack.cloud.networks_info:
-        name: "{{ network_item.key }}-cifmw-{{ zuul.build[:8] }}"
-      register: _networks_out
-      loop: "{{ crc_ci_bootstrap_networking.networks | dict2items }}"
-      loop_control:
-        label: "{{ network_item.key }}"
-        loop_var: network_item
-
-    - name: Cleanup networks
-      ansible.builtin.include_tasks: cleanup-network.yml
-      loop: "{{ _networks_out.results | map(attribute='networks') | list }}"
-      loop_control:
-        loop_var: network_item
+    - name: Tasks to run inside Zuul CI
+      ansible.builtin.command:
+        chdir: "{{ ansible_user_dir }}/src/github.com/openstack-k8s-operators/ci-bootstrap"
+        cmd: >-
+          {{ cifmw_bootstrap_venv_dir }}/bin/ansible-playbook in_zuul_cleanup-playbook.yaml
+          --connection local
+          --inventory localhost,
+          --extra-vars @/etc/ci/env/in_zuul-vars.yml
 
   always:
     - name: Remove clouds.yml secret

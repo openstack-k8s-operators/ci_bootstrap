@@ -1,0 +1,78 @@
+---
+# Copyright Red Hat, Inc.
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+- name: Load network environment definition from file
+  ansible.builtin.include_tasks: load-input.yml
+
+- name: Fetch underneath provider DNSs
+  ansible.builtin.include_tasks: fetch-provider-dns.yml
+
+- name: Check for os-net-info file
+  ansible.builtin.stat:
+    path: /etc/ci/env/os-net-info.yml
+  register: _ci_bootstrap_os_net_info_stat
+
+- name: slurp - Load os-net-info
+  when: "_ci_bootstrap_os_net_info_stat.stat.exists"
+  register: _ci_bootstrap_os_net_info_slurp
+  ansible.builtin.slurp:
+    src: /etc/ci/env/os-net-info.yml
+
+- name: Set ci_bootstrap_os_net_info fact
+  when: "_ci_bootstrap_os_net_info_stat.stat.exists"
+  ansible.builtin.set_fact:
+    ci_bootstrap_os_net_info: "{{ _ci_bootstrap_os_net_info_slurp['content'] | b64decode | from_yaml }}"
+    cacheable: true
+
+- name: Configure guest networking
+  vars:
+     mac_addr_map: "{{ ci_bootstrap_os_net_info.ci_bootstrap_os_mac_addr_map }}"
+     networks: "{{ crc_ci_bootstrap_networking.networks }}"
+     instances: "{{ crc_ci_bootstrap_networking.instances }}"
+  ansible.builtin.include_tasks: configure-guest-networking.yml
+  loop: "{{ crc_ci_bootstrap_networking.instances | dict2items }}"
+  loop_control:
+    label: "{{ instance_item.key }}"
+    loop_var: instance_item
+
+- name: Save networking data to file for further usage
+  vars:
+    content:
+      crc_ci_bootstrap_networks_out: "{{ crc_ci_bootstrap_networks_out | default({}) }}"
+      crc_ci_bootstrap_provider_dns: "{{ crc_ci_bootstrap_provider_dns | default([]) }}"
+  become: true
+  delegate_to: "{{ item }}"
+  ansible.builtin.copy:
+    dest: /etc/ci/env/networking-info.yml
+    content: "{{ content | to_nice_yaml }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: "{{ hostvars.keys() }}"
+
+- name: Save networking interface info for the mapper
+  vars:
+    content:
+      cifmw_networking_mapper_ifaces_info: "{{ ci_bootstrap_os_mac_addr_map | default({}) }}"
+  become: true
+  delegate_to: "{{ item }}"
+  ansible.builtin.copy:
+    dest: /etc/ci/env/ci-bootstrap-network-interfaces.yml
+    content: "{{ content | to_nice_yaml }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: "{{ hostvars.keys() }}"

@@ -24,7 +24,7 @@
       selectattr(
           'address',
           'equalto',
-          instance_mac_addr_map[instance_item.key][net_item.key] | lower
+          mac_addr_map[instance_item.key][net_item.key] | lower
       ) | length > 0
   retries: 30
   delay: 2
@@ -45,7 +45,7 @@
             instance_item.key: {
               item.net_item.key: item.stdout | from_json | 
                 selectattr('address', 'equalto',
-                  instance_mac_addr_map[instance_item.key][item.net_item.key] | lower
+                  mac_addr_map[instance_item.key][item.net_item.key] | lower
                 ) | first
             }
           }
@@ -63,9 +63,9 @@
             instance_item.key: {
               net_item.key: {
                 'connection': 'ci-' + net_item.key,
-                'mac': instance_mac_addr_map[instance_item.key][net_item.key] | lower,
+                'mac': mac_addr_map[instance_item.key][net_item.key] | lower,
                 'iface': _ifaces_out[instance_item.key][net_item.key].ifname,
-                'mtu': crc_ci_bootstrap_networking.networks[net_item.key].mtu | default(_ifaces_out[instance_item.key][net_item.key].mtu),
+                'mtu': networks[net_item.key].mtu | default(_ifaces_out[instance_item.key][net_item.key].mtu),
               }
             }
           }
@@ -86,13 +86,13 @@
             instance_item.key: {
               net_item.key: {
                 'connection': 'ci-' + net_item.key + '-' + net_item.value.vlan_id | string,
-                'mac': instance_mac_addr_map[instance_item.key][net_item.key] | lower,
+                'mac': mac_addr_map[instance_item.key][net_item.key] | lower,
                 'parent_iface':
                   _ifaces_out[instance_item.key][
-                    crc_ci_bootstrap_networking.instances[instance_item.key].networks[net_item.key].trunk_parent].ifname,
-                'mtu': crc_ci_bootstrap_networking.networks[net_item.key].mtu |
+                    instances[instance_item.key].networks[net_item.key].trunk_parent].ifname,
+                'mtu': networks[net_item.key].mtu |
                         default(_ifaces_out[instance_item.key][
-                          crc_ci_bootstrap_networking.instances[instance_item.key].networks[net_item.key].trunk_parent].mtu),
+                          instances[instance_item.key].networks[net_item.key].trunk_parent].mtu),
                 'vlan': net_item.value.vlan_id,
               }
             }
@@ -113,12 +113,12 @@
           {
             instance_item.key: {
               net_item.key: {
-                'ip': crc_ci_bootstrap_networking.instances[instance_item.key].networks[net_item.key].ip_v4
+                'ip': instances[instance_item.key].networks[net_item.key].ip_v4
                       + '/' +
-                      crc_ci_bootstrap_networking.networks[net_item.key].network_v4 |
+                      networks[net_item.key].network_v4 |
                       ansible.utils.ipaddr('prefix') | string,
-                'gw': crc_ci_bootstrap_networking.networks[net_item.key].gw_v4 | default(''),
-                'dns': crc_ci_bootstrap_networking.networks[net_item.key].dns_v4 | default([]),
+                'gw': networks[net_item.key].gw_v4 | default(''),
+                'dns': networks[net_item.key].dns_v4 | default([]),
               }
             }
           }
@@ -138,12 +138,12 @@
           {
             instance_item.key: {
               net_item.key: {
-                'ip_v6': crc_ci_bootstrap_networking.instances[instance_item.key].networks[net_item.key].ip_v6
+                'ip_v6': instances[instance_item.key].networks[net_item.key].ip_v6
                          + '/' +
-                         crc_ci_bootstrap_networking.networks[net_item.key].network_v6 |
+                         networks[net_item.key].network_v6 |
                          ansible.utils.ipaddr('prefix') | string,
-                'gw_v6': crc_ci_bootstrap_networking.networks[net_item.key].gw_v6 | default(''),
-                'dns_v6': crc_ci_bootstrap_networking.networks[net_item.key].dns_v6 | default([]),
+                'gw_v6': networks[net_item.key].gw_v6 | default(''),
+                'dns_v6': networks[net_item.key].dns_v6 | default([]),
               }
             }
           }

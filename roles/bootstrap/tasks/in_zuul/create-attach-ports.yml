@@ -17,7 +17,7 @@
 - name: Create port
   openstack.cloud.port:
     name: "{{ net_item.key }}-{{ instance_id }}"
-    network: "{{ net_resources_out[net_item.key].network.id }}"
+    network: "{{ ci_bootstrap_os_networks[net_item.key].network.id }}"
     # Deliberately do not set an IP address - managed externally by network mapper
     fixed_ips: []
   register: _ports_out
@@ -26,25 +26,25 @@
     label: "{{ net_item.key }}"
     loop_var: net_item
 
-- name: Update fact instance_port_map
+- name: Update fact ci_bootstrap_os_port_map
   ansible.builtin.set_fact:
-    instance_port_map: >-
-      {{ instance_port_map | default({}) | combine(
+    ci_bootstrap_os_port_map: >-
+      {{ ci_bootstrap_os_port_map | default({}) | combine(
           {
             instance_item.key:
               dict(
                 _ports_out.results | 
                 map(attribute='net_item.key') |
                 zip(_ports_out.results |
-                map(attribute='port.id')))
+                map(attribute='port')))
           }
         )
       }}
 
-- name: Update fact instance_mac_addr_map
+- name: Update fact ci_bootstrap_os_mac_addr_map
   ansible.builtin.set_fact:
-    instance_mac_addr_map: >-
-      {{ instance_mac_addr_map | default({}) | combine(
+    ci_bootstrap_os_mac_addr_map: >-
+      {{ ci_bootstrap_os_mac_addr_map | default({}) | combine(
           {
             instance_item.key:
               dict(
@@ -60,11 +60,11 @@
   ansible.builtin.command:
     cmd: >-
       {{ cifmw_bootstrap_venv_dir }}/bin/openstack network trunk create
-      --parent-port {{ instance_port_map[instance_item.key][net_item.key] }}
+      --parent-port {{ ci_bootstrap_os_port_map[instance_item.key][net_item.key].id }}
       {% for net_name, net in instance_item.value.networks.items()
             if net.trunk_parent is defined
             and net.trunk_parent == net_item.key %}
-      --subport port={{ instance_port_map[instance_item.key][net_name] }},segmentation-type=vlan,segmentation-id={{ net.vlan_id }}
+      --subport port={{ ci_bootstrap_os_port_map[instance_item.key][net_name].id }},segmentation-type=vlan,segmentation-id={{ net.vlan_id }}
       {% endfor %}
       {{ net_item.key }}-trunk-{{ instance_id }}
       -f value -c id
@@ -91,7 +91,7 @@
     cmd: >-
       {{ cifmw_bootstrap_venv_dir }}/bin/openstack server add port
       {{ instance_id }}
-      {{ instance_port_map[instance_item.key][net_item.key] }}
+      {{ ci_bootstrap_os_port_map[instance_item.key][net_item.key].id }}
   register: _attach_port
   when: net_item.value.trunk_parent is not defined
   loop: "{{ instance_item.value.networks | dict2items }}"

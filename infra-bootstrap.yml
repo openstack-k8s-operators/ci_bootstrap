@@ -75,7 +75,7 @@
     - role: "bootstrap"
       when: false
   tasks:
-    - name: Wait a little to ensure nodes booted (local only)
+    - name: (local) Wait a little to ensure nodes booted
       ansible.builtin.pause:
         minutes: 1
       when: "'local' in ansible_run_tags"
@@ -102,11 +102,11 @@
     - name: Create CI directory on all hosts
       become: true
       ansible.builtin.file:
-        path: "/etc/ci/env"
+        path: "{{ cifmw_bootstrap_ci_infra_dir }}"
         state: directory
         mode: '0755'
 
-- name: Set zuul variable if using inject or local
+- name: (inject or local) Set zuul var and inject network environment definition
   hosts: controller
   tags: ['never', 'inject', 'local']
   tasks:
@@ -124,11 +124,7 @@
 - name: Tasks to run on ansible controller
   hosts: controller
   tags: always
-  environment:
-    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   tasks:
-    - name: Run tasks/in_zuul.yaml instead of 'main'
+    - name: CI Bootstrap
       ansible.builtin.include_role:
         name: bootstrap
-        tasks_from: in_zuul
-      tags: always
