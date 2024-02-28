@@ -30,7 +30,6 @@
   delay: 2
   when: 
     - net_item.value.trunk_parent is not defined
-    - net_item.value.skip_nm is false
   loop: "{{ instance_item.value.networks | dict2items }}"
   loop_control:
     label: "{{ instance_item.key }}-{{ net_item.key }}"
@@ -71,7 +70,9 @@
           }
         , recursive=true)
       }}
-  when: net_item.value.trunk_parent is not defined
+  when:
+    - net_item.value.trunk_parent is not defined
+    - net_item.value.skip_nm is false
   loop: "{{ instance_item.value.networks | dict2items }}"
   loop_control:
     label: "{{ instance_item.key }}-{{ net_item.key }}"
@@ -99,7 +100,9 @@
           }
         , recursive=true)
       }}
-  when: net_item.value.trunk_parent is defined
+  when:
+    - net_item.value.trunk_parent is defined
+    - net_item.value.skip_nm is false
   loop: "{{ instance_item.value.networks | dict2items }}"
   loop_control:
     label: "{{ instance_item.key }}-{{ net_item.key }}"
@@ -124,7 +127,9 @@
           }
         , recursive=true)
       }}
-  when: net_item.value.network_v4 is defined
+  when:
+    - net_item.value.skip_nm is false
+    - net_item.value.network_v4 is defined
   loop: "{{ instance_item.value.networks | dict2items }}"
   loop_control:
     label: "{{ instance_item.key }}-{{ net_item.key }}"
@@ -149,7 +154,9 @@
           }
         , recursive=true)
       }}
-  when: net_item.value.network_v6 is defined
+  when:
+    - net_item.value.skip_nm is false
+    - net_item.value.network_v6 is defined
   loop: "{{ instance_item.value.networks | dict2items }}"
   loop_control:
     label: "{{ instance_item.key }}-{{ net_item.key }}"
