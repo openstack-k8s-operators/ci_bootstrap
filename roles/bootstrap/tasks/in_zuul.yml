@@ -19,81 +19,21 @@
 #   ansible.builtin.import_tasks: network-validate.yml
 
 - name: Load network environment definition from file
-  when: "crc_ci_bootstrap_networking is not defined or
-         crc_ci_bootstrap_networking | length == 0"
-  block:
-    - name: Check for network environment definition file
-      ansible.builtin.stat:
-        path: "{{ cifmw_bootstrap_net_env_def_path }}"
-      register: _net_env_file_stat
-
-    - name: Slurp network environment definition file
-      when: "_net_env_file_stat.stat.exists"
-      register: _ci_bootstrap_net_env_slurp
-      ansible.builtin.slurp:
-        src: "{{ cifmw_bootstrap_net_env_def_path }}"
-
-    - name: Save ci bootstrap networking info
-      when: "_net_env_file_stat.stat.exists"
-      ansible.builtin.set_fact:
-        crc_ci_bootstrap_networking: "{{ _ci_bootstrap_net_env_slurp['content'] | b64decode | from_yaml }}"
-        cacheable: true
-
-- name: Create openstack config dir
-  ansible.builtin.file:
-    path: "{{ ansible_user_dir }}/.config/openstack/"
-    state: directory
-    mode: '0755'
-
-- name: Create ci dir in etc folder in the controller
-  become: true
-  delegate_to: "{{ item }}"
-  ansible.builtin.file:
-    path: "/etc/ci/env"
-    state: directory
-    mode: '0755'
-  loop: "{{ hostvars.keys() }}"
-
-- name: Install other packages
-  become: true
-  ansible.builtin.package:
-    name:
-      - python3-pip
-    state: present
-
-- name: Install required packages
-  ansible.builtin.pip:
-    name:
-      - "virtualenv"
-      - "python-openstackclient"
-      - "openstacksdk>=1.0"
-
-- name: Install required packages
-  ansible.builtin.pip:
-    virtualenv: "{{ cifmw_bootstrap_venv_dir }}"
-    name:
-      - "python-openstackclient"
-      - "openstacksdk"
+  ansible.builtin.include_tasks: load-input.yml
 
 - name: Create the crc based CI environment
   environment:
     OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   block:
-    - name: Write file
-      ansible.builtin.template:
-        src: clouds.yaml.j2
-        dest: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
-        mode: "0600"
-
     - name: Create the networks and subnets
-      ansible.builtin.include_tasks: create-network-resources.yml
+      ansible.builtin.include_tasks: in_zuul/create-network-resources.yml
       loop: "{{ crc_ci_bootstrap_networking.networks | dict2items }}"
       loop_control:
         label: "{{ network_item.key }}"
         loop_var: network_item
 
     - name: Create the routers
-      ansible.builtin.include_tasks: create-router.yml
+      ansible.builtin.include_tasks: in_zuul/create-router.yml
       loop: "{{ crc_ci_bootstrap_networking.routers | default({}) | dict2items }}"
       loop_control:
         label: "{{ router_item.key }}"
@@ -101,51 +41,26 @@
 
     - name: Create ports
       vars:
-        instance_id: "{{ hostvars[instance_item.key]['nodepool']['external_id'] }}"
-      ansible.builtin.include_tasks: create-attach-ports.yml
+        instance_id: "{{ nodepool_instance_id_map[instance_item.key] }}"
+      ansible.builtin.include_tasks: in_zuul/create-attach-ports.yml
       loop: "{{ crc_ci_bootstrap_networking.instances | dict2items }}"
       loop_control:
         label: "{{ instance_item.key }}"
         loop_var: instance_item
 
-    - name: Fetch underneath provider DNSs
-      ansible.builtin.include_tasks: fetch-provider-dns.yml
-
-    - name: Configure guest networking
-      ansible.builtin.include_tasks: configure-guest-networking.yml
-      loop: "{{ crc_ci_bootstrap_networking.instances | dict2items }}"
-      loop_control:
-        label: "{{ instance_item.key }}"
-        loop_var: instance_item
-
-    - name: Save networking data to file for further usage
+    - name: Save networking data to file
       vars:
         content:
-          crc_ci_bootstrap_networks_out: "{{ crc_ci_bootstrap_networks_out | default({}) }}"
-          crc_ci_bootstrap_provider_dns: "{{ crc_ci_bootstrap_provider_dns | default([]) }}"
+          ci_bootstrap_os_networks: "{{ ci_bootstrap_os_networks }}"
+          ci_bootstrap_os_port_map: "{{ ci_bootstrap_os_port_map }}"
+          ci_bootstrap_os_mac_addr_map: "{{ ci_bootstrap_os_mac_addr_map }}"
       become: true
-      delegate_to: "{{ item }}"
       ansible.builtin.copy:
-        dest: /etc/ci/env/networking-info.yml
+        dest: /etc/ci/env/os-net-info.yml
         content: "{{ content | to_nice_yaml }}"
         owner: root
         group: root
         mode: '0644'
-      loop: "{{ hostvars.keys() }}"
-
-    - name: Save networking interface info for the mapper
-      vars:
-        content:
-          cifmw_networking_mapper_ifaces_info: "{{ instance_mac_addr_map | default({}) }}"
-      become: true
-      delegate_to: "{{ item }}"
-      ansible.builtin.copy:
-        dest: /etc/ci/env/ci-bootstrap-network-interfaces.yml
-        content: "{{ content | to_nice_yaml }}"
-        owner: root
-        group: root
-        mode: '0644'
-      loop: "{{ hostvars.keys() }}"
 
   always:
     - name: Remove cloud_secrets file

@@ -32,19 +32,25 @@ cifmw_bootstap_local_instances:
     image: CentOS-Stream-GenericCloud-9
     keypair: "{{ cifmw_bootstrap_keypair_name }}"
     security_group: "{{ cifmw_bootstrap_security_group_name }}"
-    network: "{{ cifmw_bootstrap_network_default_router_net }}"
+    network: private
   crc:
     flavor: m1.xlarge
     image: crc-image
     keypair: "{{ cifmw_bootstrap_keypair_name }}"
     security_group: "{{ cifmw_bootstrap_security_group_name }}"
-    network: "{{ cifmw_bootstrap_network_default_router_net }}"
+    network: private
   compute-0:
     flavor: m1.large
     image: CentOS-Stream-GenericCloud-9
     keypair: "{{ cifmw_bootstrap_keypair_name }}"
     security_group: "{{ cifmw_bootstrap_security_group_name }}"
-    network: "{{ cifmw_bootstrap_network_default_router_net }}"
+    network: private
+  compute-1:
+    flavor: m1.large
+    image: CentOS-Stream-GenericCloud-9
+    keypair: "{{ cifmw_bootstrap_keypair_name }}"
+    security_group: "{{ cifmw_bootstrap_security_group_name }}"
+    network: private
 cifmw_bootstrap_public_key_file: "{{ ansible_user_dir }}/.ssh/id_ed25519.pub"
 cifmw_bootstrap_cloud_name: ci_framework
 cloud_secrets:
@@ -56,6 +62,4 @@ cloud_secrets:
     interface: "public"
     identity_api_version: 3
     auth_type: "v3applicationcredential"
-zuul:
-  build: 1dcaf86e72ec4400a8012f3892d815be
 ```
