@@ -19,27 +19,31 @@
     file: "{{ cifmw_bootstrap_clouds_yaml }}"
     name: clouds_yaml
 
-- name: Cleanup instances
-  openstack.cloud.server:
-    state: absent
-    name: "{{ item.key }}-cifmw"
-  loop: "{{ cifmw_bootstap_local_instances | dict2items }}"
-  tags: create_resources
-
-- name: Cleanup resources
+- name: Cleanup cloud resources
   environment:
     OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
-  tags: cleanup_resources
   block:
-    - name: Delete keypair
-      openstack.cloud.keypair:
+    - name: Cleanup instances
+      openstack.cloud.server:
         state: absent
-        name: "{{ cifmw_bootstrap_keypair_name }}"
+        name: "{{ item.key }}-cifmw"
+      loop: "{{ cifmw_bootstap_local_instances | dict2items }}"
+      tags: create_resources
 
-    - name: Delete SG
-      openstack.cloud.security_group:
-        state: absent
-        name: "{{ cifmw_bootstrap_security_group_name }}"
+    - name: Cleanup resources
+      environment:
+        OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
+      tags: cleanup_resources
+      block:
+        - name: Delete keypair
+          openstack.cloud.keypair:
+            state: absent
+            name: "{{ cifmw_bootstrap_keypair_name }}"
+
+        - name: Delete SG
+          openstack.cloud.security_group:
+            state: absent
+            name: "{{ cifmw_bootstrap_security_group_name }}"
 
 - name: Cleanup inventory
   ansible.builtin.file:
