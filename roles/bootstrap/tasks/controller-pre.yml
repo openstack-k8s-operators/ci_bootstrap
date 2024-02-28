@@ -48,12 +48,20 @@
   ansible.builtin.include_role:
     name: prepare-workspace
 
-- name: Install packeges
+- name: Install packages
   become: true
   ansible.builtin.package:
     name:
       - python3-pip
     state: present
+
+# NOTE(hjensas): There is an issue with collection module not using the virtualenv,
+# so we need to install openstacksdk in the user local.
+- name: Install openstacksdk (outside virtualenv)
+  when: "'local' in ansible_run_tags or 'inject' in ansible_run_tags"
+  ansible.builtin.pip:
+    name:
+      - "openstacksdk"
 
 - name: Install ansible in virtualenv
   ansible.builtin.pip:
@@ -64,9 +72,10 @@
       - "openstacksdk"
       - "ansible-core"
 
-- name: Ensure Ansible galaxy collections are installed in the venv
-  ansible.builtin.shell: |
-    {{ cifmw_bootstrap_venv_dir }}/bin/ansible-galaxy collection install {{ item }}
+- name: Ensure Ansible galaxy collections are installed
+  ansible.builtin.command:
+    cmd: >-
+      {{ cifmw_bootstrap_venv_dir }}/bin/ansible-galaxy collection install {{ item }}
   loop:
     - openstack.cloud
 
