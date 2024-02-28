@@ -165,7 +165,7 @@
 - name: Apply Network Manager changes in the target instance
   delegate_to: "{{ instance_item.key }}"
   block:
-    - name: Create NetworkManager configuration file for the trunk port
+    - name: Create NetworkManager configuration file
       vars:
         iface_info: "{{ item.value }}"
       become: true
