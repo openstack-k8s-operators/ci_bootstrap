@@ -1,0 +1,6 @@
+---
+- project:
+    name: name: openstack-k8s-operators/ci-bootstrap
+    github-post:
+      jobs:
+        - podified-multinode-edpm-deployment-crc-bootstrap-staging
