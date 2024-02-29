@@ -169,7 +169,6 @@
       vars:
         iface_info: "{{ item.value }}"
       become: true
-      when: "iface_info.connection is defined and iface_info.connection != ''"
       ansible.builtin.template:
         src: >-
           {{
@@ -180,7 +179,7 @@
         mode: '0600'
         owner: root
         group: root
-      loop: "{{ crc_ci_bootstrap_networks_out[instance_item.key] | dict2items }}"
+      loop: "{{ crc_ci_bootstrap_networks_out[instance_item.key] | default({}) | dict2items }}"
       loop_control:
         label: "{{ item.key }}"
 
