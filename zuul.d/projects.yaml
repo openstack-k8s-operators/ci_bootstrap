@@ -3,4 +3,23 @@
     name: openstack-k8s-operators/ci-bootstrap
     github-post:
       jobs:
-        - podified-multinode-edpm-deployment-crc-bootstrap-staging
+        - podified-multinode-edpm-deployment-crc-bootstrap-staging:
+            required-projects:
+              - name: openstack-k8s-operators/ci-framework
+                override-checkout: main
+              - name: openstack-k8s-operators/dataplane-operator
+                override-checkout: main
+              - name: openstack-k8s-operators/install_yamls
+                override-checkout: main
+              - name: openstack-k8s-operators/infra-operator
+                override-checkout: main
+              - name: openstack-k8s-operators/openstack-baremetal-operator
+                override-checkout: main
+              - name: openstack-k8s-operators/openstack-must-gather
+                override-checkout: main
+              - name: openstack-k8s-operators/openstack-operator
+                override-checkout: main
+              - name: openstack-k8s-operators/repo-setup
+                override-checkout: main
+              - name: openstack-k8s-operators/edpm-ansible
+                override-checkout: main
