@@ -48,6 +48,15 @@
     label: "{{ instance_item.key }}"
     loop_var: instance_item
 
+- name: Ensure CI directory on all hosts
+  become: true
+  delegate_to: "{{ item }}"
+  ansible.builtin.file:
+    path: "{{ cifmw_bootstrap_ci_infra_dir }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ hostvars.keys() }}"
+
 - name: Save networking data to file for further usage
   vars:
     content:
