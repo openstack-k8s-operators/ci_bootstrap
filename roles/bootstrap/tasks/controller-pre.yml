@@ -14,6 +14,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+- name: Ensure CI directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ cifmw_bootstrap_ci_infra_dir }}"
+    state: directory
+    mode: '0755'
+
 - name: Create openstack config dir
   ansible.builtin.file:
     path: "{{ ansible_user_dir }}/.config/openstack/"
@@ -109,6 +116,7 @@
   vars:
     content:
       cifmw_bootstrap_net_env_def_path: "{{ cifmw_bootstrap_net_env_def_path }}"
+      cifmw_bootstrap_ci_infra_dir: "{{ cifmw_bootstrap_ci_infra_dir }}"
       zuul: "{{ zuul }}"
       cifmw_bootstrap_venv_dir: "{{ cifmw_bootstrap_venv_dir }}"
       nodepool_instance_id_map: "{{ nodepool_instance_id_map }}"
