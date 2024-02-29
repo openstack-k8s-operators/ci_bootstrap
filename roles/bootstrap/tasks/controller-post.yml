@@ -65,21 +65,7 @@
   become: true
   delegate_to: "{{ item }}"
   ansible.builtin.copy:
-    dest: /etc/ci/env/networking-info.yml
-    content: "{{ content | to_nice_yaml }}"
-    owner: root
-    group: root
-    mode: '0644'
-  loop: "{{ hostvars.keys() }}"
-
-- name: Save networking interface info for the mapper
-  vars:
-    content:
-      cifmw_networking_mapper_ifaces_info: "{{ ci_bootstrap_os_mac_addr_map | default({}) }}"
-  become: true
-  delegate_to: "{{ item }}"
-  ansible.builtin.copy:
-    dest: /etc/ci/env/ci-bootstrap-network-interfaces.yml
+    dest: "{{ cifmw_bootstrap_ci_infra_dir }}/networking-info.yml"
     content: "{{ content | to_nice_yaml }}"
     owner: root
     group: root

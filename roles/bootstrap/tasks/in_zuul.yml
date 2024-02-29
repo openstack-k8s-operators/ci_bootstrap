@@ -56,7 +56,7 @@
           ci_bootstrap_os_mac_addr_map: "{{ ci_bootstrap_os_mac_addr_map }}"
       become: true
       ansible.builtin.copy:
-        dest: /etc/ci/env/os-net-info.yml
+        dest: "{{ cifmw_bootstrap_ci_infra_dir }}/os-net-info.yml"
         content: "{{ content | to_nice_yaml }}"
         owner: root
         group: root
