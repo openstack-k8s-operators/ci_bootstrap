@@ -70,9 +70,7 @@
           }
         , recursive=true)
       }}
-  when:
-    - net_item.value.trunk_parent is not defined
-    - net_item.value.skip_nm is false
+  when: net_item.value.trunk_parent is not defined
   loop: "{{ instance_item.value.networks | dict2items }}"
   loop_control:
     label: "{{ instance_item.key }}-{{ net_item.key }}"
@@ -100,9 +98,7 @@
           }
         , recursive=true)
       }}
-  when:
-    - net_item.value.trunk_parent is defined
-    - net_item.value.skip_nm is false
+  when: net_item.value.trunk_parent is defined
   loop: "{{ instance_item.value.networks | dict2items }}"
   loop_control:
     label: "{{ instance_item.key }}-{{ net_item.key }}"
@@ -127,9 +123,7 @@
           }
         , recursive=true)
       }}
-  when:
-    - net_item.value.skip_nm is false
-    - networks[net_item.key].network_v4 is defined
+  when: networks[net_item.key].network_v4 is defined
   loop: "{{ instance_item.value.networks | dict2items }}"
   loop_control:
     label: "{{ instance_item.key }}-{{ net_item.key }}"
@@ -154,9 +148,7 @@
           }
         , recursive=true)
       }}
-  when:
-    - net_item.value.skip_nm is false
-    - networks[net_item.key].network_v6 is defined
+  when: networks[net_item.key].network_v6 is defined
   loop: "{{ instance_item.value.networks | dict2items }}"
   loop_control:
     label: "{{ instance_item.key }}-{{ net_item.key }}"
@@ -167,7 +159,7 @@
   block:
     - name: Create NetworkManager configuration file
       vars:
-        iface_info: "{{ item.value }}"
+        iface_info: "{{ crc_ci_bootstrap_networks_out[instance_item.key][net_item.key] }}"
       become: true
       ansible.builtin.template:
         src: >-
@@ -179,9 +171,11 @@
         mode: '0600'
         owner: root
         group: root
-      loop: "{{ crc_ci_bootstrap_networks_out[instance_item.key] | default({}) | dict2items }}"
+      when: net_item.value.skip_nm is false
+      loop: "{{ instance_item.value.networks | dict2items }}"
       loop_control:
-        label: "{{ item.key }}"
+        label: "{{ net_item.key }}"
+        loop_var: net_item
 
     - name: Refresh NetworkManager
       become: true
