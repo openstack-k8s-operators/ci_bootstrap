@@ -42,13 +42,21 @@
     dns_nameservers: "{{ network_item.value.dns_v4 }}"
     enable_dhcp: false
 
+# Get the netwok info after creating the subnet to ensure that the
+# subnet_ids field which is used in create-router.yml is populated.
+- name: Get network info
+  openstack.cloud.networks_info:
+    filters:
+      id: "{{ _network_out.network.id }}"
+  register: _network_info_out
+
 - name: Update fact ci_bootstrap_os_networks
   ansible.builtin.set_fact:
     ci_bootstrap_os_networks: >-
       {{ ci_bootstrap_os_networks | default({}) |
         combine(
           {
-            network_item.key: {'network': _network_out.network},
+            network_item.key: {'network': _network_info_out.networks | first},
           }
         ) 
       }}
