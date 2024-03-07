@@ -73,10 +73,10 @@
   hosts: controller
   tags: always
   tasks:
-    - name: Run tasks/in_zuul_cleanup.yml instead of 'main'
+    - name: Run tasks/cleanup_networking.yml instead of 'main'
       ansible.builtin.include_role:
         name: bootstrap
-        tasks_from: in_zuul_cleanup
+        tasks_from: cleanup_networking
 
 # When ran inside Zuul, this task is skipped, when run locally it will use your machine to delete network and compute.
 - name: Cleanup Non-Zuul testing resources
