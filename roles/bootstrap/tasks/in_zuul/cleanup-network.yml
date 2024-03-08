@@ -33,9 +33,9 @@
 - name: Detach instance ports
   ansible.builtin.command:
     cmd: >-
-      echo "{{ cifmw_bootstrap_venv_dir }}/bin/openstack server remove port
+      {{ cifmw_bootstrap_venv_dir }}/bin/openstack server remove port
       {{ item.device_id }}
-      {{ item.id }}"
+      {{ item.id }}
   loop: "{{ _instance_ports.results | map(attribute='ports') | list | flatten }}"
 
 - name: Delete trunk
