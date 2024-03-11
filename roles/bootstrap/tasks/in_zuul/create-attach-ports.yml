@@ -66,7 +66,7 @@
             and net.trunk_parent == net_item.key %}
       --subport port={{ ci_bootstrap_os_port_map[instance_item.key][net_name].id }},segmentation-type=vlan,segmentation-id={{ net.vlan_id }}
       {% endfor %}
-      {{ net_item.key }}-trunk-{{ instance_id }}
+      zuul-ci-trunk-{{ net_item.key }}-{{ instance_id }}
       -f value -c id
   register: _create_trunk
   when: net_item.value.is_trunk_parent | default(false)
