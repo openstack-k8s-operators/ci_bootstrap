@@ -65,5 +65,5 @@
   always:
     - name: Remove cloud_secrets file
       ansible.builtin.file:
-        path: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
+        path: "{{ cifmw_bootstrap_clouds_yaml }}"
         state: absent

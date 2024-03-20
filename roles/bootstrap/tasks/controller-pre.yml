@@ -23,7 +23,7 @@
 
 - name: Create openstack config dir
   ansible.builtin.file:
-    path: "{{ ansible_user_dir }}/.config/openstack/"
+    path: "{{ cifmw_bootstrap_openstack_config_dir }}"
     state: directory
     mode: '0755'
   tags: always
@@ -31,7 +31,7 @@
 - name: Write clouds.yaml file
   ansible.builtin.template:
     src: clouds.yaml.j2
-    dest: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
+    dest: "{{ cifmw_bootstrap_clouds_yaml }}"
     mode: "0600"
   tags: always
 
