@@ -10,6 +10,7 @@ It supports OpenStack cloud as provider.
 * `cifmw_bootstrap_openstack_cmd_delay_value`: (Integer) Default delay value when retrying some openstack commands. Defaults to `5`.
 * `cifmw_bootstrap_ci_infra_dir`: (String) Directory where to search and save CI environment files. Default to `"/etc/ci/env"`.
 * `cifmw_bootstrap_net_env_def_path`: (String) Path to the network environment definition file. Defaults to `"{{ cifmw_bootstrap_ci_infra_dir }}/networking-environment-definition.yml"`
+* `cifmw_bootstrap_create_application_credential`: (Boolean) Whether to create application credentials and use them for all subsequent OpenStack operations. Defaults to `false`.
 
 ## TODO
 * Management of computes resources is not yet supported.

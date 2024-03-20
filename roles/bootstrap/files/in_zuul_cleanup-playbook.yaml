@@ -21,3 +21,8 @@
     ansible.builtin.include_role:
       name: bootstrap
       tasks_from: in_zuul/cleanup-networks.yml
+  - name: Clean up application credential
+    when: cifmw_bootstrap_create_application_credential | bool
+    ansible.builtin.include_role:
+      name: bootstrap
+      tasks_from: in_zuul/cleanup-application-credential.yml
