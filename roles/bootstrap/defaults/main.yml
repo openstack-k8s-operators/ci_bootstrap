@@ -31,3 +31,5 @@ cifmw_bootstrap_openstack_cmd_delay_value: "{{ crc_ci_bootstrap_openstack_cmd_de
 
 cifmw_bootstrap_ci_infra_dir: "/etc/ci/env"
 cifmw_bootstrap_net_env_def_path: "{{ cifmw_bootstrap_ci_infra_dir }}/networking-environment-definition.yml"
+
+cifmw_bootstrap_create_application_credential: false

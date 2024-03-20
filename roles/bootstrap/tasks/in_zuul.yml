@@ -21,6 +21,10 @@
 - name: Load network environment definition from file
   ansible.builtin.include_tasks: load-input.yml
 
+- name: Replace cloud config with new application credential
+  when: cifmw_bootstrap_create_application_credential | bool
+  ansible.builtin.include_tasks: in_zuul/create-application-credential.yml
+
 - name: Create the crc based CI environment
   environment:
     OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
