@@ -21,6 +21,15 @@ While testing, you may want to skip instance creation after the first deployment
 If you would like to clean up, run infra-bootstrap-cleanup.yml, you can skip cleaning up the network resources with `--skip-tags cleanup_network`:
 `ansible-playbook infra-bootstrap-cleanup.yml -e @my_vars.yml --skip-tags cleanup_network --tags inject`
 
+**NOTE**:
+> To fully cleanup the local environment the infra-bootstrap-cleanup.yml playbook **must** be called with the `inject` tag first. Then again with the `local` tag. 
+> 
+> Step 1: `ansible-playbook infra-bootstrap-cleanup.yml -e @my_vars.yml --tags inject`
+> Step 2: `ansible-playbook infra-bootstrap-cleanup.yml -e @my_vars.yml --tags local`
+> 
+> If the playbook is called with the `local` tag only the instances are deleted, leaving the networks/ports/router resources - which then must be manually deleted.
+
+
 When running in zuul, no tags will be used as that will be the default operation.
 
 Example `my_vars.yml` for local testing:
