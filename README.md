@@ -37,24 +37,28 @@ Example `my_vars.yml` for local testing:
 local_net_env_def: networking-environment-definition.yml
 cifmw_bootstap_local_instances:
   controller:
+    ssh_user: cloud-user
     flavor: m1.large
     image: CentOS-Stream-GenericCloud-9
     keypair: "{{ cifmw_bootstrap_keypair_name }}"
     security_group: "{{ cifmw_bootstrap_security_group_name }}"
     network: private
   crc:
+    ssh_user: core
     flavor: m1.xlarge
     image: crc-image
     keypair: "{{ cifmw_bootstrap_keypair_name }}"
     security_group: "{{ cifmw_bootstrap_security_group_name }}"
     network: private
   compute-0:
+    ssh_user: cloud-user
     flavor: m1.large
     image: CentOS-Stream-GenericCloud-9
     keypair: "{{ cifmw_bootstrap_keypair_name }}"
     security_group: "{{ cifmw_bootstrap_security_group_name }}"
     network: private
   compute-1:
+    ssh_user: cloud-user
     flavor: m1.large
     image: CentOS-Stream-GenericCloud-9
     keypair: "{{ cifmw_bootstrap_keypair_name }}"
