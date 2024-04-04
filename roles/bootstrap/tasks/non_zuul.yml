@@ -32,7 +32,7 @@
     create-instance.yml
   vars:
     instance_name: "{{ item.key }}"
-    instance_ssh_user: "{{ item.value.ssh_user }}"
+    instance_ssh_user: "{{ item.value.ssh_user | default('cloud-user') }}"
     instance_flavor: "{{ item.value.flavor }}"
     instance_image: "{{ item.value.image }}"
     instance_keypair: "{{ item.value.keypair }}"

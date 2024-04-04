@@ -33,7 +33,7 @@
 - name: Add to Ansible inventory "{{ instance_name }}"
   ansible.builtin.add_host:
     name: "{{ instance_name }}"
-    ansible_ssh_user: "{{ instance_ssh_user | default("cloud-user") }}"
+    ansible_ssh_user: "{{ instance_ssh_user }}"
     ansible_host: "{{ server_info.servers[0].access_ipv4 }}"
     groups: nodepool
     nodepool: { 'external_id': "{{ result.server.id }}" }
