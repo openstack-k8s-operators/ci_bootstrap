@@ -44,6 +44,8 @@
         mode: "0600"
 
     - name: Tasks to run inside Zuul CI
+      environment:
+        ANSIBLE_LOG_PATH: "{{ ansible_user_dir }}/in_zuul_cleanup_ansible.log"
       ansible.builtin.command:
         chdir: "{{ ansible_user_dir }}/src/github.com/openstack-k8s-operators/ci-bootstrap"
         cmd: >-
