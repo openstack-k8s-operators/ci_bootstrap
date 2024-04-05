@@ -24,6 +24,7 @@ cifmw_bootstrap_clouds_yaml: "{{ cifmw_bootstrap_openstack_config_dir }}/clouds.
 cifmw_bootstrap_security_group_name: "ci_bootstrap_sg_crc"
 cifmw_bootstrap_crc_security_group_name: "ci_bootstrap_sg_crc"
 cifmw_bootstrap_venv_dir: "{{ ansible_user_dir }}/bootstrap-venv"
+cifmw_bootstrap_net_name_prefix: "zuul-ci-net"
 
 cifmw_bootstrap_openstack_cmd_retries_value: "{{ crc_ci_bootstrap_openstack_cmd_retries | default(10) }}"
 cifmw_bootstrap_openstack_cmd_delay_value: "{{ crc_ci_bootstrap_openstack_cmd_delay | default(5) }}"

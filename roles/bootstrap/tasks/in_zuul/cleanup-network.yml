@@ -31,6 +31,8 @@
   loop: "{{ network_item }}"
 
 - name: Detach instance ports
+  environment:
+    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   ansible.builtin.command:
     cmd: >-
       {{ cifmw_bootstrap_venv_dir }}/bin/openstack server remove port
@@ -39,6 +41,8 @@
   loop: "{{ _instance_ports.results | map(attribute='ports') | list | flatten }}"
 
 - name: Delete trunk
+  environment:
+    OS_CLOUD: "{{ cifmw_bootstrap_cloud_name }}"
   ansible.builtin.command:
     cmd: >-
       {{ cifmw_bootstrap_venv_dir }}/bin/openstack network trunk delete
