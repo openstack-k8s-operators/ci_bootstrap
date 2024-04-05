@@ -20,23 +20,56 @@
     name: "{{ cifmw_bootstrap_keypair_name }}"
     public_key_file: "{{ cifmw_bootstrap_public_key_file }}"
 
-- name: Create SG
+- name: Create Security Groups
   openstack.cloud.security_group:
     state: present
-    name: "{{ cifmw_bootstrap_security_group_name }}"
+    name: "{{ item }}"
+  loop:
+    - "{{ cifmw_bootstrap_security_group_name }}"
+    - "{{ cifmw_bootstrap_crc_security_group_name }}"
 
 - name: Create ICMP SG rule
   openstack.cloud.security_group_rule:
-    security_group: "{{ cifmw_bootstrap_security_group_name }}"
+    security_group: "{{ item }}"
     protocol: icmp
     remote_ip_prefix: 0.0.0.0/0
+  loop:
+    - "{{ cifmw_bootstrap_security_group_name }}"
+    - "{{ cifmw_bootstrap_crc_security_group_name }}"
 
 - name: Create ssh SG rule
   openstack.cloud.security_group_rule:
-    security_group: "{{ cifmw_bootstrap_security_group_name }}"
+    security_group: "{{ item }}"
     protocol: tcp
     port_range_min: 22
     port_range_max: 22
+    remote_ip_prefix: 0.0.0.0/0
+  loop:
+    - "{{ cifmw_bootstrap_security_group_name }}"
+    - "{{ cifmw_bootstrap_crc_security_group_name }}"
+
+- name: Create HTTP SG rule
+  openstack.cloud.security_group_rule:
+    security_group: "{{ cifmw_bootstrap_crc_security_group_name }}"
+    protocol: tcp
+    port_range_min: 80
+    port_range_max: 80
+    remote_ip_prefix: 0.0.0.0/0
+
+- name: Create HTTPs SG rule
+  openstack.cloud.security_group_rule:
+    security_group: "{{ cifmw_bootstrap_crc_security_group_name }}"
+    protocol: tcp
+    port_range_min: 443
+    port_range_max: 443
+    remote_ip_prefix: 0.0.0.0/0
+
+- name: Create OCP API SG rule
+  openstack.cloud.security_group_rule:
+    security_group: "{{ cifmw_bootstrap_crc_security_group_name }}"
+    protocol: tcp
+    port_range_min: 6443
+    port_range_max: 6443
     remote_ip_prefix: 0.0.0.0/0
 
 # TODO: Finish work on this

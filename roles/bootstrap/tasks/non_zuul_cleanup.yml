@@ -43,7 +43,10 @@
         - name: Delete SG
           openstack.cloud.security_group:
             state: absent
-            name: "{{ cifmw_bootstrap_security_group_name }}"
+            name: "{{ item }}"
+          loop:
+            - "{{ cifmw_bootstrap_security_group_name }}"
+            - "{{ cifmw_bootstrap_crc_security_group_name }}"
 
 - name: Cleanup inventory
   ansible.builtin.file:
