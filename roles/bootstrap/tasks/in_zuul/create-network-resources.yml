@@ -17,7 +17,7 @@
 - name: Create network
   openstack.cloud.network:
     state: present
-    name: "zuul-ci-net-{{ network_item.key }}-cifmw-{{ zuul.build[:8] }}"
+    name: "{{ cifmw_bootstrap_net_name_prefix }}-{{ network_item.key }}-cifmw-{{ zuul.build[:8] }}"
     port_security_enabled: false
   register: _network_out
 

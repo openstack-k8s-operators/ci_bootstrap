@@ -121,6 +121,7 @@
       cifmw_bootstrap_venv_dir: "{{ cifmw_bootstrap_venv_dir }}"
       nodepool_instance_id_map: "{{ nodepool_instance_id_map }}"
       cifmw_bootstrap_cloud_name: "{{ cifmw_bootstrap_cloud_name }}"
+      cifmw_bootstrap_net_name_prefix: "{{ cifmw_bootstrap_net_name_prefix }}"
   become: true
   ansible.builtin.copy:
     dest: /etc/ci/env/in_zuul-vars.yml
