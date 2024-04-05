@@ -48,7 +48,7 @@ cifmw_bootstap_local_instances:
     flavor: m1.xlarge
     image: crc-image
     keypair: "{{ cifmw_bootstrap_keypair_name }}"
-    security_group: "{{ cifmw_bootstrap_security_group_name }}"
+    security_group: "{{ cifmw_bootstrap_crc_security_group_name }}"
     network: private
   compute-0:
     ssh_user: cloud-user
