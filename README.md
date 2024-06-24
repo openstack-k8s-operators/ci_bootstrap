@@ -1,5 +1,11 @@
 # cifmw_bootstrap
 
+> [!WARNING]  
+> This repository is **WORK IN PROGRESS**. If you need a way to bootstrap instances and networks to deploy Openstack-K8s-Operators, please check [ci-framework doc](https://ci-framework.readthedocs.io/en/latest/).
+
+> [!IMPORTANT]
+> Please avoid adding more tasks using **ansible-collections-openstack** modules since we plan to remove all occurrences for this modules soon.
+
 This repo is primarily used to bootstrap the CI environments networking. Given a network layout, networks, subnets, routers and ports will be created and attached to OpenStack instances.
 
 Given the difficulty of testing "trusted" Zuul repo code, this role also supports running outside Zuul against any OpenStack environment. This way patches can be tested without merging code into the repo.
