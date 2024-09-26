@@ -81,10 +81,8 @@
       {%     set _ = instances_data.update({inst_item.key:[]}) -%}
       {%   endif -%}
       {%   for net_item in inst_item.value | default({}) | dict2items -%}
-      {%     if 'parent_iface' not in net_item.value -%}
-      {%       set mapped_net_data = {'mac': net_item.value.mac, 'network': net_item.key} -%}
-      {%       set _ = instances_data.update({inst_item.key: instances_data[inst_item.key] + [mapped_net_data]}) -%}
-      {%     endif -%}
+      {%     set mapped_net_data = {'mac': net_item.value.mac, 'network': net_item.key} -%}
+      {%     set _ = instances_data.update({inst_item.key: instances_data[inst_item.key] + [mapped_net_data]}) -%}
       {%   endfor -%}
       {% endfor -%}
       {{ instances_data }}
