@@ -71,3 +71,27 @@
     group: root
     mode: '0644'
   loop: "{{ hostvars.keys() }}"
+
+- name: Generate the interfaces-info for the Networking mapper
+  vars:
+    content: >-
+      {% set instances_data = {} -%}
+      {% for inst_item in crc_ci_bootstrap_networks_out | default({}) | dict2items -%}
+      {%   if inst_item.key not in instances_data -%}
+      {%     set _ = instances_data.update({inst_item.key:[]}) -%}
+      {%   endif -%}
+      {%   for net_item in inst_item.value | default({}) | dict2items -%}
+      {%     if 'parent_iface' not in net_item.value -%}
+      {%       set mapped_net_data = {'mac': net_item.value.mac, 'network': net_item.key} -%}
+      {%       set _ = instances_data.update({inst_item.key: instances_data[inst_item.key] + [mapped_net_data]}) -%}
+      {%     endif -%}
+      {%   endfor -%}
+      {% endfor -%}
+      {{ instances_data }}
+  become: true
+  ansible.builtin.copy:
+    dest: "{{ cifmw_bootstrap_ci_infra_dir }}/interfaces-info.yml"
+    content: "{{ content | to_nice_yaml }}"
+    owner: root
+    group: root
+    mode: '0644'
