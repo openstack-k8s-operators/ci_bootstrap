@@ -55,12 +55,12 @@
 - name: Create router
   when: router_item.value.external_network is defined
   openstack.cloud.router:
-    name: "zuul-ci-router-{{ router_item.key }}-{{ zuul.build[:8] }}"
+    name: "zuul-ci-router-{{ router_item.key }}-{{ cifmw_bootstrap_build_id[:8] }}"
     network: "{{ router_item.value.external_network }}"
     interfaces: "{{ router_interfaces }}"
 
 - name: Create router (no external gateway network)
   when: router_item.value.external_network is not defined
   openstack.cloud.router:
-    name: "zuul-ci-router-{{ router_item.key }}-{{ zuul.build[:8] }}"
+    name: "zuul-ci-router-{{ router_item.key }}-{{ cifmw_bootstrap_build_id[:8] }}"
     interfaces: "{{ router_interfaces }}"
