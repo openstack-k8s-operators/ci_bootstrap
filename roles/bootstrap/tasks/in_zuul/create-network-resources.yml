@@ -17,7 +17,7 @@
 - name: Create network
   openstack.cloud.network:
     state: present
-    name: "{{ cifmw_bootstrap_net_name_prefix }}-{{ network_item.key }}-cifmw-{{ zuul.build[:8] }}"
+    name: "{{ cifmw_bootstrap_net_name_prefix }}-{{ network_item.key }}-cifmw-{{ cifmw_bootstrap_build_id[:8] }}"
     port_security_enabled: false
   register: _network_out
 
@@ -26,7 +26,7 @@
   openstack.cloud.subnet:
     state: present
     network_name: "{{ _network_out.network.id }}"
-    name: "{{ network_item.key }}-subnet-cifmw-{{ zuul.build[:8] }}"
+    name: "{{ network_item.key }}-subnet-cifmw-{{ cifmw_bootstrap_build_id[:8] }}"
     cidr: "{{ network_item.value.network_v4 }}"
     gateway_ip: "{{ network_item.value.gw_v4 | default(none) }}"
     dns_nameservers: "{{ network_item.value.dns_v4 }}"
@@ -37,7 +37,7 @@
   openstack.cloud.subnet:
     state: present
     network_name: "{{ _network_out.network.id }}"
-    name: "{{ network_item.key }}-subnet-cifmw-{{ zuul.build[:8] }}"
+    name: "{{ network_item.key }}-subnet-cifmw-{{ cifmw_bootstrap_build_id[:8] }}"
     cidr: "{{ network_item.value.network_v4 }}"
     dns_nameservers: "{{ network_item.value.dns_v4 }}"
     enable_dhcp: false
@@ -58,5 +58,5 @@
           {
             network_item.key: {'network': _network_info_out.networks | first},
           }
-        ) 
+        )
       }}

@@ -23,8 +23,7 @@
   tasks:
     - name: Set zuul var
       ansible.builtin.set_fact:
-        zuul:
-          build: 1dcaf86e72ec4400a8012f3892d815be
+        cifmw_bootstrap_build_id: 1dcaf86e72ec4400a8012f3892d815be
     - name: Run tasks/non_zuul instead of 'main'
       ansible.builtin.include_role:
         name: bootstrap
@@ -112,8 +111,8 @@
   tasks:
     - name: Set zuul var
       ansible.builtin.set_fact:
-        zuul:
-          build: 1dcaf86e72ec4400a8012f3892d815be
+        cifmw_bootstrap_build_id: 1dcaf86e72ec4400a8012f3892d815be
+
     - name: Copy network-environment-definition to controller
       when: local_net_env_def is defined
       become: true

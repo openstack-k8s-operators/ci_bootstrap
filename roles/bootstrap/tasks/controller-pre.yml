@@ -132,7 +132,7 @@
     content:
       cifmw_bootstrap_net_env_def_path: "{{ cifmw_bootstrap_net_env_def_path }}"
       cifmw_bootstrap_ci_infra_dir: "{{ cifmw_bootstrap_ci_infra_dir }}"
-      zuul: "{{ zuul }}"
+      cifmw_bootstrap_build_id: "{{ zuul.build }}"
       cifmw_bootstrap_venv_dir: "{{ cifmw_bootstrap_venv_dir }}"
       nodepool_instance_id_map: "{{ nodepool_instance_id_map }}"
       cifmw_bootstrap_cloud_name: "{{ cifmw_bootstrap_cloud_name }}"

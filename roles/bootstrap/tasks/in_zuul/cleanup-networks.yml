@@ -5,7 +5,7 @@
 
 - name: Get the networks
   openstack.cloud.networks_info:
-    name: "{{ cifmw_bootstrap_net_name_prefix }}-{{ network_item.key }}-cifmw-{{ zuul.build[:8] }}"
+    name: "{{ cifmw_bootstrap_net_name_prefix }}-{{ network_item.key }}-cifmw-{{ cifmw_bootstrap_build_id[:8] }}"
   register: _networks_out
   loop: "{{ crc_ci_bootstrap_networking.networks | dict2items }}"
   loop_control:
